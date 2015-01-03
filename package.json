@@ -1,0 +1,24 @@
+{
+  "name": "ksana-search",
+  "version": "1.0.0",
+  "description": "ksana search engine",
+  "main": "index.js",
+  "scripts": {
+    "test": "mocha"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://yapcheahshen@github.com/ksanaforge/ksana-search"
+  },
+  "keywords": [
+    "full",
+    "text",
+    "search"
+  ],
+  "author": "yapcheahshen@gmail.com",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/ksanaforge/ksana-search/issues"
+  },
+  "homepage": "https://github.com/ksanaforge/ksana-search"
+}
