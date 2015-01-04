@@ -33,12 +33,13 @@ var parseTerm = function(engine,raw,opts) {
 var expandTerm=function(engine,regex) {
 	var r=new RegExp(regex);
 	var tokens=engine.get("tokens");
-	var postingslen=engine.get("postingslen");
+	var postingsLength=engine.get("postingsLength");
+	if (!postingsLength) postingsLength=[];
 	var out=[];
 	for (var i=0;i<tokens.length;i++) {
 		var m=tokens[i].match(r);
 		if (m) {
-			out.push([m[0],postingslen[i]]);
+			out.push([m[0],postingsLength[i]||1]);
 		}
 	}
 	out.sort(function(a,b){return b[1]-a[1]});
