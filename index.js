@@ -16,6 +16,7 @@ var prepareEngineForSearch=function(engine,cb){
 		cb();
 	});
 }
+
 var _search=function(engine,q,opts,cb,context) {
 	if (typeof engine=="string") {//browser only
 		var kde=require("ksana-database");

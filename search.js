@@ -1,3 +1,22 @@
+/*
+var dosearch2=function(engine,opts,cb,context) {
+	opts
+		nfile,npage  //return a highlighted page
+		nfile,[pages] //return highlighted pages 
+		nfile        //return entire highlighted file
+		abs_npage
+		[abs_pages]  //return set of highlighted pages (may cross file)
+
+		filename, pagename
+		filename,[pagenames]
+
+		excerpt      //
+	    sortBy       //default natural, sortby by vsm ranking
+
+	//return err,array_of_string ,Q  (Q contains low level search result)
+}
+
+*/
 /* TODO sorted tokens */
 var plist=require("./plist");
 var boolsearch=require("./boolsearch");
@@ -33,7 +52,7 @@ var parseTerm = function(engine,raw,opts) {
 var expandTerm=function(engine,regex) {
 	var r=new RegExp(regex);
 	var tokens=engine.get("tokens");
-	var postingsLength=engine.get("postingsLength");
+	var postingsLength=engine.get("postingslength");
 	if (!postingsLength) postingsLength=[];
 	var out=[];
 	for (var i=0;i<tokens.length;i++) {
@@ -192,18 +211,18 @@ var trimSpace=function(engine,query) {
 	while (isSkip(query[i]) && i<query.length) i++;
 	return query.substring(i);
 }
-var getPageWithHit=function(fileid,offsets) {
+var getSegWithHit=function(fileid,offsets) {
 	var Q=this,engine=Q.engine;
-	var pagewithhit=plist.groupbyposting2(Q.byFile[fileid ], offsets);
-	if (pagewithhit.length) pagewithhit.shift(); //the first item is not used (0~Q.byFile[0] )
+	var segWithHit=plist.groupbyposting2(Q.byFile[fileid ], offsets);
+	if (segWithHit.length) segWithHit.shift(); //the first item is not used (0~Q.byFile[0] )
 	var out=[];
-	pagewithhit.map(function(p,idx){if (p.length) out.push(idx)});
+	segWithHit.map(function(p,idx){if (p.length) out.push(idx)});
 	return out;
 }
-var pageWithHit=function(fileid) {
+var segWithHit=function(fileid) {
 	var Q=this,engine=Q.engine;
-	var offsets=engine.getFilePageOffsets(fileid);
-	return getPageWithHit.apply(this,[fileid,offsets]);
+	var offsets=engine.getFileSegOffsets(fileid);
+	return getSegWithHit.apply(this,[fileid,offsets]);
 }
 var isSimplePhrase=function(phrase) {
 	var m=phrase.match(/[\?%^]/);
@@ -383,7 +402,7 @@ var newQuery =function(engine,query,opts) {
 	Q.tokenize=function() {return engine.analyzer.tokenize.apply(engine,arguments);}
 	Q.isSkip=function() {return engine.analyzer.isSkip.apply(engine,arguments);}
 	Q.normalize=function() {return engine.analyzer.normalize.apply(engine,arguments);}
-	Q.pageWithHit=pageWithHit;
+	Q.segWithHit=segWithHit;
 
 	//Q.getRange=function() {return that.getRange.apply(that,arguments)};
 	//API.queryid='Q'+(Math.floor(Math.random()*10000000)).toString(16);
@@ -434,7 +453,7 @@ var groupBy=function(Q,posting) {
 	return this;
 }
 var groupByFolder=function(engine,filehits) {
-	var files=engine.get("fileNames");
+	var files=engine.get("filenames");
 	var prevfolder="",hits=0,out=[];
 	for (var i=0;i<filehits.length;i++) {
 		var fn=files[i];
@@ -451,10 +470,10 @@ var groupByFolder=function(engine,filehits) {
 }
 var phrase_intersect=function(engine,Q) {
 	var intersected=null;
-	var fileOffsets=Q.engine.get("fileOffsets");
+	var fileoffsets=Q.engine.get("fileoffsets");
 	var empty=[],emptycount=0,hashit=0;
 	for (var i=0;i<Q.phrases.length;i++) {
-		var byfile=plist.groupbyposting2(Q.phrases[i].posting,fileOffsets);
+		var byfile=plist.groupbyposting2(Q.phrases[i].posting,fileoffsets);
 		if (byfile.length) byfile.shift();
 		if (byfile.length) byfile.pop();
 		byfile.pop();
@@ -524,11 +543,11 @@ var main=function(engine,q,opts,cb){
 			} else {
 				phrase_intersect(engine,Q);
 			}
-			var fileOffsets=Q.engine.get("fileOffsets");
+			var fileoffsets=Q.engine.get("fileoffsets");
 			//console.log("search opts "+JSON.stringify(opts));
 
 			if (!Q.byFile && Q.rawresult && !opts.nogroup) {
-				Q.byFile=plist.groupbyposting2(Q.rawresult, fileOffsets);
+				Q.byFile=plist.groupbyposting2(Q.rawresult, fileoffsets);
 				Q.byFile.shift();Q.byFile.pop();
 				Q.byFolder=groupByFolder(engine,Q.byFile);
 

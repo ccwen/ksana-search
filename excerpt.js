@@ -153,9 +153,9 @@ var resultlist=function(engine,Q,opts,cb) {
 	if (opts.range) {
 		if (opts.range.maxhit && !opts.range.maxfile) {
 			opts.range.maxfile=opts.range.maxhit;
-			opts.range.maxpage=opts.range.maxhit;
+			opts.range.maxseg=opts.range.maxhit;
 		}
-		if (!opts.range.maxpage) opts.range.maxpage=100;
+		if (!opts.range.maxseg) opts.range.maxseg=100;
 		if (!opts.range.end) {
 			opts.range.end=Number.MAX_SAFE_INTEGER;
 		}
@@ -166,34 +166,34 @@ var resultlist=function(engine,Q,opts,cb) {
 		return;
 	}
 
-	var output=[],files=[];//temporary holder for pagenames
+	var output=[],files=[];//temporary holder for segnames
 	for (var i=0;i<fileWithHits.length;i++) {
 		var nfile=fileWithHits[i];
-		var pageOffsets=engine.getFilePageOffsets(nfile);
-		var pageNames=engine.getFilePageNames(nfile);
-		files[nfile]={pageOffsets:pageOffsets};
-		var pagewithhit=plist.groupbyposting2(Q.byFile[ nfile ],  pageOffsets);
-		//if (pageOffsets[0]==1)
-		//pagewithhit.shift(); //the first item is not used (0~Q.byFile[0] )
+		var segoffsets=engine.getFileSegOffsets(nfile);
+		var segnames=engine.getFileSegNames(nfile);
+		files[nfile]={segoffsets:segoffsets};
+		var segwithhit=plist.groupbyposting2(Q.byFile[ nfile ],  segoffsets);
+		//if (segoffsets[0]==1)
+		//segwithhit.shift(); //the first item is not used (0~Q.byFile[0] )
 
-		for (var j=0; j<pagewithhit.length;j++) {
-			if (!pagewithhit[j].length) continue;
-			//var offsets=pagewithhit[j].map(function(p){return p- fileOffsets[i]});
-			if (pageOffsets[j]>opts.range.end) break;
-			output.push(  {file: nfile, page:j,  pagename:pageNames[j]});
-			if (output.length>opts.range.maxpage) break;
+		for (var j=0; j<segwithhit.length;j++) {
+			if (!segwithhit[j].length) continue;
+			//var offsets=segwithhit[j].map(function(p){return p- fileOffsets[i]});
+			if (segoffsets[j]>opts.range.end) break;
+			output.push(  {file: nfile, seg:j,  segname:segnames[j]});
+			if (output.length>opts.range.maxseg) break;
 		}
 	}
 
-	var pagepaths=output.map(function(p){
-		return ["fileContents",p.file,p.page];
+	var segpaths=output.map(function(p){
+		return ["filecontents",p.file,p.seg];
 	});
 	//prepare the text
-	engine.get(pagepaths,function(pages){
+	engine.get(segpaths,function(segs){
 		var seq=0;
-		if (pages) for (var i=0;i<pages.length;i++) {
-			var startvpos=files[output[i].file].pageOffsets[output[i].page-1];
-			var endvpos=files[output[i].file].pageOffsets[output[i].page];
+		if (segs) for (var i=0;i<segs.length;i++) {
+			var startvpos=files[output[i].file].segoffsets[output[i].seg-1];
+			var endvpos=files[output[i].file].segoffsets[output[i].seg];
 			var hl={};
 
 			if (opts.range && opts.range.start  ) {
@@ -202,11 +202,11 @@ var resultlist=function(engine,Q,opts,cb) {
 			}
 			
 			if (opts.nohighlight) {
-				hl.text=pages[i];
+				hl.text=segs[i];
 				hl.hits=hitInRange(Q,startvpos,endvpos);
 			} else {
 				var o={nocrlf:true,nospan:true,
-					text:pages[i],startvpos:startvpos, endvpos: endvpos, 
+					text:segs[i],startvpos:startvpos, endvpos: endvpos, 
 					Q:Q,fulltext:opts.fulltext};
 				hl=highlight(Q,o);
 			}
@@ -306,27 +306,27 @@ var highlight=function(Q,opts) {
 	return {text:injectTag(Q,opt),hits:opt.hits};
 }
 
-var getPage=function(engine,fileid,pageid,cb) {
+var getSeg=function(engine,fileid,segid,cb) {
 	var fileOffsets=engine.get("fileOffsets");
-	var pagepaths=["fileContents",fileid,pageid];
-	var pagenames=engine.getFilePageNames(fileid);
+	var segpaths=["filecontents",fileid,segid];
+	var segnames=engine.getFileSegNames(fileid);
 
-	engine.get(pagepaths,function(text){
-		cb.apply(engine.context,[{text:text,file:fileid,page:pageid,pagename:pagenames[pageid]}]);
+	engine.get(segpaths,function(text){
+		cb.apply(engine.context,[{text:text,file:fileid,seg:segid,segname:segnames[segid]}]);
 	});
 }
 
-var getPageSync=function(engine,fileid,pageid) {
-	var fileOffsets=engine.get("fileOffsets");
-	var pagepaths=["fileContents",fileid,pageid];
-	var pagenames=engine.getFilePageNames(fileid);
+var getSegSync=function(engine,fileid,segid) {
+	var fileOffsets=engine.get("fileoffsets");
+	var segpaths=["filecontents",fileid,segid];
+	var segnames=engine.getFileSegNames(fileid);
 
-	var text=engine.get(pagepaths);
-	return {text:text,file:fileid,page:pageid,pagename:pagenames[pageid]};
+	var text=engine.get(segpaths);
+	return {text:text,file:fileid,seg:segid,segname:segnames[segid]};
 }
 
 var getRange=function(engine,start,end,cb) {
-	var fileOffsets=engine.get("fileOffsets");
+	var fileoffsets=engine.get("fileoffsets");
 	//var pagepaths=["fileContents",];
 	//find first page and last page
 	//create get paths
@@ -334,18 +334,18 @@ var getRange=function(engine,start,end,cb) {
 }
 
 var getFile=function(engine,fileid,cb) {
-	var filename=engine.get("fileNames")[fileid];
-	var pagenames=engine.getFilePageNames(fileid);
-	var filestart=engine.get("fileOffsets")[fileid];
-	var offsets=engine.getFilePageOffsets(fileid);
+	var filename=engine.get("filenames")[fileid];
+	var segnames=engine.getFileSegNames(fileid);
+	var filestart=engine.get("fileoffsets")[fileid];
+	var offsets=engine.getFileSegOffsets(fileid);
 	var pc=0;
 	engine.get(["fileContents",fileid],true,function(data){
 		var text=data.map(function(t,idx) {
 			if (idx==0) return ""; 
-			var pb='<pb n="'+pagenames[idx]+'"></pb>';
+			var pb='<pb n="'+segnames[idx]+'"></pb>';
 			return pb+t;
 		});
-		cb({texts:data,text:text.join(""),pagenames:pagenames,filestart:filestart,offsets:offsets,file:fileid,filename:filename}); //force different token
+		cb({texts:data,text:text.join(""),segnames:segnames,filestart:filestart,offsets:offsets,file:fileid,filename:filename}); //force different token
 	});
 }
 
@@ -360,7 +360,7 @@ var highlightFile=function(Q,fileid,opts,cb) {
 
 	if (!Q || !Q.engine) return cb(null);
 
-	var pageOffsets=Q.engine.getFilePageOffsets(fileid);
+	var segoffsets=Q.engine.getFileSegOffsets(fileid);
 	var output=[];	
 	//console.log(startvpos,endvpos)
 	Q.engine.get(["fileContents",fileid],true,function(data){
@@ -368,15 +368,15 @@ var highlightFile=function(Q,fileid,opts,cb) {
 			console.error("wrong file id",fileid);
 		} else {
 			for (var i=0;i<data.length-1;i++ ){
-				var startvpos=pageOffsets[i];
-				var endvpos=pageOffsets[i+1];
-				var pagenames=Q.engine.getFilePageNames(fileid);
+				var startvpos=segoffsets[i];
+				var endvpos=segoffsets[i+1];
+				var pagenames=Q.engine.getFileSegNames(fileid);
 				var page=getPageSync(Q.engine, fileid,i+1);
 					var opt={text:page.text,hits:null,tag:'hl',vpos:startvpos,
 					fulltext:true,nospan:opts.nospan,nocrlf:opts.nocrlf};
-				var pagename=pagenames[i+1];
+				var segname=segnames[i+1];
 				opt.hits=hitInRange(Q,startvpos,endvpos);
-				var pb='<pb n="'+pagename+'"></pb>';
+				var pb='<pb n="'+segname+'"></pb>';
 				var withtag=injectTag(Q,opt);
 				output.push(pb+withtag);
 			}			
@@ -385,18 +385,18 @@ var highlightFile=function(Q,fileid,opts,cb) {
 		cb.apply(Q.engine.context,[{text:output.join(""),file:fileid}]);
 	})
 }
-var highlightPage=function(Q,fileid,pageid,opts,cb) {
+var highlightSeg=function(Q,fileid,segid,opts,cb) {
 	if (typeof opts=="function") {
 		cb=opts;
 	}
 
 	if (!Q || !Q.engine) return cb(null);
-	var pageOffsets=Q.engine.getFilePageOffsets(fileid);
-	var startvpos=pageOffsets[pageid-1];
-	var endvpos=pageOffsets[pageid];
-	var pagenames=Q.engine.getFilePageNames(fileid);
+	var segoffsets=Q.engine.getFileSegOffsets(fileid);
+	var startvpos=segoffsets[segid-1];
+	var endvpos=segoffsets[segid];
+	var pagenames=Q.engine.getFileSegNames(fileid);
 
-	this.getPage(Q.engine,fileid,pageid,function(res){
+	this.getPage(Q.engine,fileid,segid,function(res){
 		var opt={text:res.text,hits:null,vpos:startvpos,fulltext:true,
 			nospan:opts.nospan,nocrlf:opts.nocrlf};
 		opt.hits=hitInRange(Q,startvpos,endvpos);
@@ -404,14 +404,14 @@ var highlightPage=function(Q,fileid,pageid,opts,cb) {
 			opt.tags=tagsInRange(Q,opts.renderTags,startvpos,endvpos);
 		}
 
-		var pagename=pagenames[pageid];
-		cb.apply(Q.engine.context,[{text:injectTag(Q,opt),page:pageid,file:fileid,hits:opt.hits,pagename:pagename}]);
+		var pagename=pagenames[segid];
+		cb.apply(Q.engine.context,[{text:injectTag(Q,opt),page:segid,file:fileid,hits:opt.hits,pagename:pagename}]);
 	});
 }
 module.exports={resultlist:resultlist, 
 	hitInRange:hitInRange, 
-	highlightPage:highlightPage,
-	getPage:getPage,
+	highlightSeg:highlightSeg,
+	getSeg:getSeg,
 	highlightFile:highlightFile,
 	getFile:getFile
 	//highlightRange:highlightRange,
