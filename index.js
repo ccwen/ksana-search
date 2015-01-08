@@ -12,7 +12,7 @@ var prepareEngineForSearch=function(engine,cb){
 	var analyzer=require("ksana-analyzer");
 	var config=engine.get("meta").config;
 	engine.analyzer=analyzer.getAPI(config);
-	engine.get([["tokens"],["postingsLength"]],function(){
+	engine.get([["tokens"],["postingslength"]],function(){
 		cb();
 	});
 }

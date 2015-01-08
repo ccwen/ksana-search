@@ -192,7 +192,7 @@ var resultlist=function(engine,Q,opts,cb) {
 	engine.get(segpaths,function(segs){
 		var seq=0;
 		if (segs) for (var i=0;i<segs.length;i++) {
-			var startvpos=files[output[i].file].segoffsets[output[i].seg-1];
+			var startvpos=files[output[i].file].segoffsets[output[i].seg-1] ||0;
 			var endvpos=files[output[i].file].segoffsets[output[i].seg];
 			var hl={};
 
