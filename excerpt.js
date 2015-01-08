@@ -95,7 +95,7 @@ output:
    array of fileid with hits
 */
 var getFileWithHits=function(engine,Q,range) {
-	var fileOffsets=engine.get("fileOffsets");
+	var fileOffsets=engine.get("fileoffsets");
 	var out=[],filecount=100;
 	var start=0 , end=Q.byFile.length;
 	Q.excerptOverflow=false;
@@ -115,7 +115,7 @@ var getFileWithHits=function(engine,Q,range) {
 		start=range.filestart || 0;
 		if (range.maxfile) {
 			filecount=range.maxfile;
-		} else if (range.showpage) {
+		} else if (range.showseg) {
 			throw "not implement yet"
 		}
 	}
@@ -307,7 +307,7 @@ var highlight=function(Q,opts) {
 }
 
 var getSeg=function(engine,fileid,segid,cb) {
-	var fileOffsets=engine.get("fileOffsets");
+	var fileOffsets=engine.get("fileoffsets");
 	var segpaths=["filecontents",fileid,segid];
 	var segnames=engine.getFileSegNames(fileid);
 
@@ -370,9 +370,9 @@ var highlightFile=function(Q,fileid,opts,cb) {
 			for (var i=0;i<data.length-1;i++ ){
 				var startvpos=segoffsets[i];
 				var endvpos=segoffsets[i+1];
-				var pagenames=Q.engine.getFileSegNames(fileid);
-				var page=getPageSync(Q.engine, fileid,i+1);
-					var opt={text:page.text,hits:null,tag:'hl',vpos:startvpos,
+				var segnames=Q.engine.getFileSegNames(fileid);
+				var seg=getSegSync(Q.engine, fileid,i+1);
+					var opt={text:seg.text,hits:null,tag:'hl',vpos:startvpos,
 					fulltext:true,nospan:opts.nospan,nocrlf:opts.nocrlf};
 				var segname=segnames[i+1];
 				opt.hits=hitInRange(Q,startvpos,endvpos);
@@ -394,9 +394,9 @@ var highlightSeg=function(Q,fileid,segid,opts,cb) {
 	var segoffsets=Q.engine.getFileSegOffsets(fileid);
 	var startvpos=segoffsets[segid-1];
 	var endvpos=segoffsets[segid];
-	var pagenames=Q.engine.getFileSegNames(fileid);
+	var segnames=Q.engine.getFileSegNames(fileid);
 
-	this.getPage(Q.engine,fileid,segid,function(res){
+	this.getSeg(Q.engine,fileid,segid,function(res){
 		var opt={text:res.text,hits:null,vpos:startvpos,fulltext:true,
 			nospan:opts.nospan,nocrlf:opts.nocrlf};
 		opt.hits=hitInRange(Q,startvpos,endvpos);
@@ -404,8 +404,8 @@ var highlightSeg=function(Q,fileid,segid,opts,cb) {
 			opt.tags=tagsInRange(Q,opts.renderTags,startvpos,endvpos);
 		}
 
-		var pagename=pagenames[segid];
-		cb.apply(Q.engine.context,[{text:injectTag(Q,opt),page:segid,file:fileid,hits:opt.hits,pagename:pagename}]);
+		var segname=segnames[segid];
+		cb.apply(Q.engine.context,[{text:injectTag(Q,opt),seg:segid,file:fileid,hits:opt.hits,segname:segname}]);
 	});
 }
 module.exports={resultlist:resultlist, 

@@ -44,10 +44,10 @@ var _search=function(engine,q,opts,cb,context) {
 	}
 }
 
-var _highlightPage=function(engine,fileid,pageid,opts,cb){
+var _highlightSeg=function(engine,fileid,segid,opts,cb){
 	if (!opts.q) opts.q=""; 
 	_search(engine,opts.q,opts,function(Q){
-		api.excerpt.highlightPage(Q,fileid,pageid,opts,cb);
+		api.excerpt.highlightSeg(Q,fileid,segid,opts,cb);
 	});	
 }
 var _highlightRange=function(engine,start,end,opts,cb){
@@ -76,25 +76,25 @@ var _highlightFile=function(engine,fileid,opts,cb){
 	*/
 }
 
-var vpos2filepage=function(engine,vpos) {
-    var pageOffsets=engine.get("pageOffsets");
-    var fileOffsets=engine.get(["fileOffsets"]);
-    var pageNames=engine.get("pageNames");
-    var fileid=bsearch(fileOffsets,vpos+1,true);
+var vpos2fileseg=function(engine,vpos) {
+    var segoffsets=engine.get("segoffsets");
+    var fileoffsets=engine.get(["fileoffsets"]);
+    var segnames=engine.get("segnames");
+    var fileid=bsearch(fileoffsets,vpos+1,true);
     fileid--;
-    var pageid=bsearch(pageOffsets,vpos+1,true);
+    var segid=bsearch(segoffsets,vpos+1,true);
 	var range=engine.getFileRange(fileid);
-	pageid-=range.start;
-    return {file:fileid,page:pageid};
+	segid-=range.start;
+    return {file:fileid,seg:segid};
 }
 var api={
 	search:_search
 //	,concordance:require("./concordance")
 //	,regex:require("./regex")
-	,highlightPage:_highlightPage
+	,highlightSeg:_highlightSeg
 	,highlightFile:_highlightFile
 //	,highlightRange:_highlightRange
 	,excerpt:require("./excerpt")
-	,vpos2filepage:vpos2filepage
+	,vpos2fileseg:vpos2fileseg
 }
 module.exports=api;
