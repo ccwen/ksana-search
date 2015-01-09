@@ -8,7 +8,10 @@ var bsearch=require("./bsearch");
 var dosearch=require("./search");
 
 var prepareEngineForSearch=function(engine,cb){
-	if (engine.analyzer)return;
+	if (engine.analyzer) {
+		cb();
+		return;
+	}
 	var analyzer=require("ksana-analyzer");
 	var config=engine.get("meta").config;
 	engine.analyzer=analyzer.getAPI(config);
