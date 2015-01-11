@@ -208,7 +208,7 @@ var trimSpace=function(engine,query) {
 	if (!query) return "";
 	var i=0;
 	var isSkip=engine.analyzer.isSkip;
-	while (isSkip(query[i]) && i<query.length) i++;
+	while (i<query.length && isSkip(query[i])) i++;
 	return query.substring(i);
 }
 var getSegWithHit=function(fileid,offsets) {

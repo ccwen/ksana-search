@@ -47,21 +47,24 @@ var _search=function(engine,q,opts,cb,context) {
 	}
 }
 
-var _highlightSeg=function(engine,fileid,segid,opts,cb){
-	if (!opts.q) opts.q=""; 
-	_search(engine,opts.q,opts,function(Q){
-		api.excerpt.highlightSeg(Q,fileid,segid,opts,cb);
-	});	
+var _highlightSeg=function(engine,fileid,segid,opts,cb,context){
+	if (!opts.q) {
+		api.excerpt.getSeg(engine,fileid,segid,opts,cb,context);
+	} else {
+		_search(engine,opts.q,opts,function(err,Q){
+			api.excerpt.highlightSeg(Q,fileid,segid,opts,cb,context);
+		});			
+	}
 }
-var _highlightRange=function(engine,start,end,opts,cb){
+var _highlightRange=function(engine,start,end,opts,cb,context){
 
 	if (opts.q) {
 		_search(engine,opts.q,opts,function(Q){
-			api.excerpt.highlightRange(Q,start,end,opts,cb);
+			api.excerpt.highlightRange(Q,start,end,opts,cb,context);
 		});
 	} else {
 		prepareEngineForSearch(engine,function(){
-			api.excerpt.getRange(engine,start,end,cb);
+			api.excerpt.getRange(engine,start,end,cb,context);
 		});
 	}
 }

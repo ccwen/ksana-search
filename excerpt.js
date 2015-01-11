@@ -306,13 +306,20 @@ var highlight=function(Q,opts) {
 	return {text:injectTag(Q,opt),hits:opt.hits};
 }
 
-var getSeg=function(engine,fileid,segid,cb) {
+var getSeg=function(engine,fileid,segid,opts,cb,context) {
+	if (typeof opts=="function") {
+		context=cb;
+		cb=opts;
+		opts={};
+	}
+
 	var fileOffsets=engine.get("fileoffsets");
 	var segpaths=["filecontents",fileid,segid];
 	var segnames=engine.getFileSegNames(fileid);
 
 	engine.get(segpaths,function(text){
-		cb.apply(engine.context,[{text:text,file:fileid,seg:segid,segname:segnames[segid]}]);
+		//if (opts.span) text=addspan.apply(engine,[text]);
+		cb.apply(context||engine.context,[{text:text,file:fileid,seg:segid,segname:segnames[segid]}]);
 	});
 }
 
@@ -385,12 +392,12 @@ var highlightFile=function(Q,fileid,opts,cb) {
 		cb.apply(Q.engine.context,[{text:output.join(""),file:fileid}]);
 	})
 }
-var highlightSeg=function(Q,fileid,segid,opts,cb) {
+var highlightSeg=function(Q,fileid,segid,opts,cb,context) {
 	if (typeof opts=="function") {
 		cb=opts;
 	}
 
-	if (!Q || !Q.engine) return cb(null);
+	if (!Q || !Q.engine) return cb.apply(context,[null]);
 	var segoffsets=Q.engine.getFileSegOffsets(fileid);
 	var startvpos=segoffsets[segid-1];
 	var endvpos=segoffsets[segid];
@@ -405,7 +412,7 @@ var highlightSeg=function(Q,fileid,segid,opts,cb) {
 		}
 
 		var segname=segnames[segid];
-		cb.apply(Q.engine.context,[{text:injectTag(Q,opt),seg:segid,file:fileid,hits:opt.hits,segname:segname}]);
+		cb.apply(context||Q.engine.context,[{text:injectTag(Q,opt),seg:segid,file:fileid,hits:opt.hits,segname:segname}]);
 	});
 }
 module.exports={resultlist:resultlist, 
