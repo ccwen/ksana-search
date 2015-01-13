@@ -508,6 +508,7 @@ var countFolderFile=function(Q) {
 }
 
 var main=function(engine,q,opts,cb){
+
 	var starttime=new Date();
 	var meta=engine.get("meta");
 	if (meta.normalize && engine.analyzer.setNormalizeTable) {
@@ -526,11 +527,11 @@ var main=function(engine,q,opts,cb){
 	};
 	engine.queryCache[q]=Q;
 	if (Q.phrases.length) {
+		
 		loadPostings(engine,Q.terms,function(){
 			if (!Q.phrases[0].posting) {
 				engine.searchtime=new Date()-starttime;
-				engine.totaltime=engine.searchtime
-
+				engine.totaltime=engine.searchtime;
 				cb.apply(engine.context,["no such posting",{rawresult:[]}]);
 				return;			
 			}

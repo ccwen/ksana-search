@@ -12,10 +12,12 @@ var prepareEngineForSearch=function(engine,cb){
 		cb();
 		return;
 	}
-	var analyzer=require("ksana-analyzer");
-	var config=engine.get("meta").config;
-	engine.analyzer=analyzer.getAPI(config);
+
 	engine.get([["tokens"],["postingslength"]],function(){
+		var analyzer=require("ksana-analyzer");
+		var config=engine.get("meta").config;
+		engine.analyzer=analyzer.getAPI(config);
+
 		cb();
 	});
 }
@@ -82,17 +84,6 @@ var _highlightFile=function(engine,fileid,opts,cb){
 	*/
 }
 
-var vpos2fileseg=function(engine,vpos) {
-    var segoffsets=engine.get("segoffsets");
-    var fileoffsets=engine.get(["fileoffsets"]);
-    var segnames=engine.get("segnames");
-    var fileid=bsearch(fileoffsets,vpos+1,true);
-    fileid--;
-    var segid=bsearch(segoffsets,vpos+1,true);
-	var range=engine.getFileRange(fileid);
-	segid-=range.start;
-    return {file:fileid,seg:segid};
-}
 var api={
 	search:_search
 //	,concordance:require("./concordance")
@@ -101,6 +92,6 @@ var api={
 	,highlightFile:_highlightFile
 //	,highlightRange:_highlightRange
 	,excerpt:require("./excerpt")
-	,vpos2fileseg:vpos2fileseg
+	//,vpos2fileseg:vpos2fileseg
 }
 module.exports=api;
