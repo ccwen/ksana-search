@@ -8,16 +8,17 @@ var bsearch=require("./bsearch");
 var dosearch=require("./search");
 
 var prepareEngineForSearch=function(engine,cb){
-	if (engine.analyzer) {
+	if (engine.get("tokens") && engine.tokenizer) {
 		cb();
 		return;
 	}
 
 	engine.get([["tokens"],["postingslength"]],function(){
-		var analyzer=require("ksana-analyzer");
-		var config=engine.get("meta").config;
-		engine.analyzer=analyzer.getAPI(config);
-
+		if (!engine.analyzer) {
+			var analyzer=require("ksana-analyzer");
+			var config=engine.get("meta").config;
+			engine.analyzer=analyzer.getAPI(config);			
+		}
 		cb();
 	});
 }
@@ -51,6 +52,11 @@ var _search=function(engine,q,opts,cb,context) {
 
 var _highlightSeg=function(engine,fileid,segid,opts,cb,context){
 	if (!opts.q) {
+		if (!engine.analyzer) {
+			var analyzer=require("ksana-analyzer");
+			var config=engine.get("meta").config;
+			engine.analyzer=analyzer.getAPI(config);			
+		}
 		api.excerpt.getSeg(engine,fileid,segid,opts,cb,context);
 	} else {
 		_search(engine,opts.q,opts,function(err,Q){

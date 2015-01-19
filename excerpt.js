@@ -306,6 +306,15 @@ var highlight=function(Q,opts) {
 	return {text:injectTag(Q,opt),hits:opt.hits};
 }
 
+var addspan=function(text,startvpos){
+	engine=this;
+	var output="";
+	var tokens=engine.analyzer.tokenize(text).tokens;
+	for (var i=0;i<tokens.length;i++) {
+		output+='<span vpos="'+(i+startvpos)+'">'+tokens[i]+"</span>";
+	}
+	return output;
+}
 var getSeg=function(engine,fileid,segid,opts,cb,context) {
 	if (typeof opts=="function") {
 		context=cb;
@@ -316,9 +325,10 @@ var getSeg=function(engine,fileid,segid,opts,cb,context) {
 	var fileOffsets=engine.get("fileoffsets");
 	var segpaths=["filecontents",fileid,segid];
 	var segnames=engine.getFileSegNames(fileid);
+	var vpos=engine.fileSegToVpos(fileid,segid);
 
 	engine.get(segpaths,function(text){
-		//if (opts.span) text=addspan.apply(engine,[text]);
+		if (opts.span) text=addspan.apply(engine,[text,vpos]);
 		cb.apply(context||engine.context,[{text:text,file:fileid,seg:segid,segname:segnames[segid]}]);
 	});
 }
@@ -406,10 +416,10 @@ var highlightSeg=function(Q,fileid,segid,opts,cb,context) {
 	this.getSeg(Q.engine,fileid,segid,function(res){
 		var opt={text:res.text,hits:null,vpos:startvpos,fulltext:true,
 			nospan:opts.nospan,nocrlf:opts.nocrlf};
-		opt.hits=hitInRange(Q,startvpos,endvpos);
-		if (opts.renderTags) {
-			opt.tags=tagsInRange(Q,opts.renderTags,startvpos,endvpos);
-		}
+			opt.hits=hitInRange(Q,startvpos,endvpos);
+			if (opts.renderTags) {
+				opt.tags=tagsInRange(Q,opts.renderTags,startvpos,endvpos);
+			}
 
 		var segname=segnames[segid];
 		cb.apply(context||Q.engine.context,[{text:injectTag(Q,opt),seg:segid,file:fileid,hits:opt.hits,segname:segname}]);
