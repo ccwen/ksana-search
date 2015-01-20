@@ -312,7 +312,16 @@ var addspan=function(text,startvpos){
 	var tokens=engine.analyzer.tokenize(text).tokens;
 	for (var i=0;i<tokens.length;i++) {
 		output+='<span vpos="'+(i+startvpos)+'">'+tokens[i]+"</span>";
-	}
+	}		
+	return output;
+}
+var addtoken=function(text,startvpos) {
+	engine=this;
+	var output=[];
+	var tokens=engine.analyzer.tokenize(text).tokens;
+	for (var i=0;i<tokens.length;i++) {
+		output.push([tokens[i],i+startvpos]);
+	}		
 	return output;
 }
 var getSeg=function(engine,fileid,segid,opts,cb,context) {
@@ -328,8 +337,10 @@ var getSeg=function(engine,fileid,segid,opts,cb,context) {
 	var vpos=engine.fileSegToVpos(fileid,segid);
 
 	engine.get(segpaths,function(text){
-		if (opts.span) text=addspan.apply(engine,[text,vpos]);
-		cb.apply(context||engine.context,[{text:text,file:fileid,seg:segid,segname:segnames[segid]}]);
+		var out=text;
+		if (opts.span) out=addspan.apply(engine,[text,vpos]);
+		else if(opts.token) out=addtoken.apply(engine,[text,vpos]);
+		cb.apply(context||engine.context,[{text:out,file:fileid,seg:segid,segname:segnames[segid]}]);
 	});
 }
 
