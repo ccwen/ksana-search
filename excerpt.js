@@ -310,8 +310,11 @@ var addspan=function(text,startvpos){
 	engine=this;
 	var output="";
 	var tokens=engine.analyzer.tokenize(text).tokens;
+	var isSkip=engine.analyzer.isSkip;
+	var vpos=startvpos;
 	for (var i=0;i<tokens.length;i++) {
-		output+='<span vpos="'+(i+startvpos)+'">'+tokens[i]+"</span>";
+		output+='<span vpos="'+(vpos)+'">'+tokens[i]+"</span>";
+		if (!isSkip(tokens[i])) vpos++;
 	}		
 	return output;
 }
@@ -319,8 +322,11 @@ var addtoken=function(text,startvpos) {
 	engine=this;
 	var output=[];
 	var tokens=engine.analyzer.tokenize(text).tokens;
+	var isSkip=engine.analyzer.isSkip;
+	var vpos=startvpos;
 	for (var i=0;i<tokens.length;i++) {
-		output.push([tokens[i],i+startvpos]);
+		output.push([tokens[i],vpos]);
+		if (!isSkip(tokens[i])) vpos++;
 	}		
 	return output;
 }
