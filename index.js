@@ -38,7 +38,6 @@ var _search=function(engine,q,opts,cb,context) {
 				cb(err);
 				return;
 			}
-			console.log("opened",opts.dbid)
 			prepareEngineForSearch(db,function(){
 				return dosearch(db,q,opts,cb);	
 			});

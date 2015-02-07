@@ -338,8 +338,8 @@ var slowPhrase=function(engine,terms,phrase) {
 
 			var splitted=splitPhrase(engine,phrase);
 			for (var i=0;i<splitted.tokens.length;i++) {
-
 				var term=parseTerm(engine,splitted.tokens[i]);
+				if (!term) continue;
 				var termidx=terms.map(function(a){return a.key}).indexOf(term.key);
 				if (termidx==-1) {
 					terms.push(term);
@@ -481,7 +481,7 @@ var phrase_intersect=function(engine,Q) {
 			intersected=byfile;
 		} else {
 			for (var j=0;j<byfile.length;j++) {
-				if (!(byfile[j].length && intersected[j].length)) {
+				if (!(byfile[j].length && intersected[j] && intersected[j].length)) {
 					intersected[j]=empty; //reuse empty array
 					emptycount++;
 				} else hashit++;
