@@ -397,7 +397,7 @@ var highlightFile=function(Q,fileid,opts,cb) {
 	var segoffsets=Q.engine.getFileSegOffsets(fileid);
 	var output=[];	
 	//console.log(startvpos,endvpos)
-	Q.engine.get(["fileContents",fileid],true,function(data){
+	Q.engine.get(["filecontents",fileid],true,function(data){
 		if (!data) {
 			console.error("wrong file id",fileid);
 		} else {

@@ -66,7 +66,7 @@ var _highlightSeg=function(engine,fileid,segid,opts,cb,context){
 var _highlightRange=function(engine,start,end,opts,cb,context){
 
 	if (opts.q) {
-		_search(engine,opts.q,opts,function(Q){
+		_search(engine,opts.q,opts,function(err,Q){
 			api.excerpt.highlightRange(Q,start,end,opts,cb,context);
 		});
 	} else {
@@ -77,7 +77,7 @@ var _highlightRange=function(engine,start,end,opts,cb,context){
 }
 var _highlightFile=function(engine,fileid,opts,cb){
 	if (!opts.q) opts.q=""; 
-	_search(engine,opts.q,opts,function(Q){
+	_search(engine,opts.q,opts,function(err,Q){
 		api.excerpt.highlightFile(Q,fileid,opts,cb);
 	});
 	/*
