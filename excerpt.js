@@ -406,7 +406,7 @@ var highlightFile=function(Q,fileid,opts,cb) {
 				var endvpos=segoffsets[i+1];
 				var segnames=Q.engine.getFileSegNames(fileid);
 				var seg=getSegSync(Q.engine, fileid,i+1);
-					var opt={text:seg.text,hits:null,tag:'hl',vpos:startvpos,
+				var opt={text:seg.text,hits:null,tag:'hl',vpos:startvpos,
 					fulltext:true,nospan:opts.nospan,nocrlf:opts.nocrlf};
 				var segname=segnames[i+1];
 				opt.hits=hitInRange(Q,startvpos,endvpos);
