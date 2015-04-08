@@ -1,9 +1,8 @@
-/*
-  Ksana Search Engine.
+//
+// Ksana Search Engine.
 
-  need a KDE instance to be functional
-  
-*/
+//  need a KDE instance to be functional
+
 var bsearch=require("./bsearch");
 var dosearch=require("./search");
 
@@ -49,6 +48,7 @@ var _search=function(engine,q,opts,cb,context) {
 	}
 }
 
+
 var _highlightSeg=function(engine,fileid,segid,opts,cb,context){
 	if (!opts.q) {
 		if (!engine.analyzer) {
@@ -80,23 +80,11 @@ var _highlightFile=function(engine,fileid,opts,cb){
 	_search(engine,opts.q,opts,function(err,Q){
 		api.excerpt.highlightFile(Q,fileid,opts,cb);
 	});
-	/*
-	} else {
-		api.excerpt.getFile(engine,fileid,function(data) {
-			cb.apply(engine.context,[data]);
-		});
-	}
-	*/
 }
-
 var api={
 	search:_search
-//	,concordance:require("./concordance")
-//	,regex:require("./regex")
-	,highlightSeg:_highlightSeg
-	,highlightFile:_highlightFile
-//	,highlightRange:_highlightRange
-	,excerpt:require("./excerpt")
-	//,vpos2fileseg:vpos2fileseg
+	//,highlightSeg:_highlightSeg
+	//,highlightFile:_highlightFile
+	//,excerpt:require("./excerpt")
 }
 module.exports=api;

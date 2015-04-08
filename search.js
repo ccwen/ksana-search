@@ -278,7 +278,7 @@ var splitPhrase=function(engine,simplephrase,bigram) {
 	return {tokens:loadtokens, lengths: lengths , tokenlength: tokens.length};
 }
 /* host has fast native function */
-var fastPhrase=function(engine,phrase) {
+var fastPhrase=function(engine,phrase,cb) {
 	var phrase_term=newPhrase();
 	//var tokens=engine.analyzer.tokenize(phrase).tokens;
 	var splitted=splitPhrase(engine,phrase);
@@ -296,11 +296,13 @@ var fastPhrase=function(engine,phrase) {
 			if (splitted.lengths[i]>1) {
 				postingAddressWithWildcard.push([splitted.lengths[i],0]); //wildcard has blocksize==0 
 			}
-		}
-		engine.postingCache[phrase]=engine.mergePostings(postingAddressWithWildcard);
+		};
+		engine.mergePostings(postingAddressWithWildcard,function(r){
+			engine.postingCache[phrase]=r;
+			cb(phrase_term);
+		});
+		
 	});
-	return phrase_term;
-	// put posting into cache[phrase.key]
 }
 var slowPhrase=function(engine,terms,phrase) {
 	var j=0,tokens=engine.analyzer.tokenize(phrase).tokens;
@@ -363,8 +365,15 @@ var slowPhrase=function(engine,terms,phrase) {
 	} while(T);		
 	return phrase_term;
 }
-var newQuery =function(engine,query,opts) {
-	//if (!query) return;
+
+
+var newQuery =function(engine,query,opts,cb) {
+	var Q=engine.queryCache[query];
+	if (Q) {
+		cb(Q);
+		return;
+	}
+
 	opts=opts||{};
 	query=trimSpace(engine,query);
 
@@ -375,6 +384,7 @@ var newQuery =function(engine,query,opts) {
 	
 	var phrase_terms=[], terms=[],variants=[],operators=[];
 	var pc=0;//phrase count
+	var that=this,taskqueue=[];
 	for  (var i=0;i<phrases.length;i++) {
 		var op=getOperator(phrases[pc]);
 		if (op) phrases[pc]=phrases[pc].substring(1);
@@ -383,30 +393,48 @@ var newQuery =function(engine,query,opts) {
 		//if (!opts.rank && op!='exclude' &&i) op='include';
 		operators.push(op);
 
-		if (isSimplePhrase(phrases[pc]) && engine.mergePostings ) {
-			var phrase_term=fastPhrase(engine,phrases[pc]);
-		} else {
-			var phrase_term=slowPhrase(engine,terms,phrases[pc]);
-		}
-		phrase_terms.push(phrase_term);
+		taskqueue.push(function(data){
 
-		if (!engine.mergePostings && phrase_terms[pc].termid.length==0) {
-			phrase_terms.pop();
-		} else pc++;
+			if (typeof data=='object' && data.__empty) {
+				//not pushing the first call
+			} else {
+				if (engine.mergePostings || data.termid.length!=0) {
+					phrase_terms.push(data);
+					pc++;
+				}
+			}
+
+			if (isSimplePhrase(phrases[pc]) && engine.mergePostings ) {
+				
+				fastPhrase(engine,phrases[pc],function(res){
+					taskqueue.shift()(res);
+				});
+			} else {
+				taskqueue.shift()(slowPhrase(engine,terms,phrases[pc] ));
+			}
+		});
 	}
-	opts.op=operators;
 
-	var Q={dbname:engine.dbname,engine:engine,opts:opts,query:query,
-		phrases:phrase_terms,terms:terms
-	};
+	//last call to child load
+	taskqueue.push(function(data){
+		console.log("final")
+		if (engine.mergePostings || data.termid.length!=0) {
+			phrase_terms.push(data);
+			pc++;
+		}
+		opts.op=operators;
+		cb.call(that,Q);
+	});
+
+
+	var Q={dbname:engine.dbname,engine:engine,opts:opts,query:query,phrases:phrase_terms,terms:terms,segWithHit:segWithHit};
 	Q.tokenize=function() {return engine.analyzer.tokenize.apply(engine,arguments);}
 	Q.isSkip=function() {return engine.analyzer.isSkip.apply(engine,arguments);}
-	Q.normalize=function() {return engine.analyzer.normalize.apply(engine,arguments);}
-	Q.segWithHit=segWithHit;
+	Q.normalize=function() {return engine.analyzer.normalize.apply(engine,arguments);}	
 
-	//Q.getRange=function() {return that.getRange.apply(that,arguments)};
-	//API.queryid='Q'+(Math.floor(Math.random()*10000000)).toString(16);
-	return Q;
+	//invoke task queue
+	console.log(taskqueue)
+	taskqueue.shift()({__empty:true});
 }
 var postingPathFromTokens=function(engine,tokens) {
 	var alltokens=engine.get("tokens");
@@ -516,64 +544,66 @@ var main=function(engine,q,opts,cb){
 	}
 	if (typeof opts=="function") cb=opts;
 	opts=opts||{};
-	var Q=engine.queryCache[q];
-	if (!Q) Q=newQuery(engine,q,opts); 
-	if (!Q) {
-		engine.searchtime=new Date()-starttime;
-		engine.totaltime=engine.searchtime;
-		if (engine.context) cb.apply(engine.context,["empty result",{rawresult:[]}]);
-		else cb("empty result",{rawresult:[]});
-		return;
-	};
-	engine.queryCache[q]=Q;
-	if (Q.phrases.length) {
-		
-		loadPostings(engine,Q.terms,function(){
-			if (!Q.phrases[0].posting) {
-				engine.searchtime=new Date()-starttime;
-				engine.totaltime=engine.searchtime;
-				cb.apply(engine.context,["no such posting",{rawresult:[]}]);
-				return;			
-			}
+	
+	newQuery(engine,q,opts,function(Q){ 
+		if (!Q) {
+			engine.searchtime=new Date()-starttime;
+			engine.totaltime=engine.searchtime;
+			if (engine.context) cb.apply(engine.context,["empty result",{rawresult:[]}]);
+			else cb("empty result",{rawresult:[]});
+			return;
+		};
+		engine.queryCache[q]=Q;
+		console.log("load posting")
+		if (Q.phrases.length) {
 			
-			if (!Q.phrases[0].posting.length) { //
-				Q.phrases.forEach(loadPhrase.bind(Q));
-			}
-			if (Q.phrases.length==1) {
-				Q.rawresult=Q.phrases[0].posting;
-			} else {
-				phrase_intersect(engine,Q);
-			}
-			var fileoffsets=Q.engine.get("fileoffsets");
-			//console.log("search opts "+JSON.stringify(opts));
+			loadPostings(engine,Q.terms,function(){
+				if (!Q.phrases[0].posting) {
+					engine.searchtime=new Date()-starttime;
+					engine.totaltime=engine.searchtime;
+					cb.apply(engine.context,["no such posting",{rawresult:[]}]);
+					return;			
+				}
+				
+				if (!Q.phrases[0].posting.length) { //
+					Q.phrases.forEach(loadPhrase.bind(Q));
+				}
+				if (Q.phrases.length==1) {
+					Q.rawresult=Q.phrases[0].posting;
+				} else {
+					phrase_intersect(engine,Q);
+				}
+				var fileoffsets=Q.engine.get("fileoffsets");
+				//console.log("search opts "+JSON.stringify(opts));
 
-			if (!Q.byFile && Q.rawresult && !opts.nogroup) {
-				Q.byFile=plist.groupbyposting2(Q.rawresult, fileoffsets);
-				Q.byFile.shift();Q.byFile.pop();
-				Q.byFolder=groupByFolder(engine,Q.byFile);
+				if (!Q.byFile && Q.rawresult && !opts.nogroup) {
+					Q.byFile=plist.groupbyposting2(Q.rawresult, fileoffsets);
+					Q.byFile.shift();Q.byFile.pop();
+					Q.byFolder=groupByFolder(engine,Q.byFile);
 
-				countFolderFile(Q);
-			}
+					countFolderFile(Q);
+				}
 
-			if (opts.range) {
-				engine.searchtime=new Date()-starttime;
-				excerpt.resultlist(engine,Q,opts,function(data) { 
-					//console.log("excerpt ok");
-					Q.excerpt=data;
+				if (opts.range) {
+					engine.searchtime=new Date()-starttime;
+					excerpt.resultlist(engine,Q,opts,function(data) { 
+						//console.log("excerpt ok");
+						Q.excerpt=data;
+						engine.totaltime=new Date()-starttime;
+						cb.apply(engine.context,[0,Q]);
+					});
+				} else {
+					engine.searchtime=new Date()-starttime;
 					engine.totaltime=new Date()-starttime;
 					cb.apply(engine.context,[0,Q]);
-				});
-			} else {
-				engine.searchtime=new Date()-starttime;
-				engine.totaltime=new Date()-starttime;
-				cb.apply(engine.context,[0,Q]);
-			}
-		});
-	} else { //empty search
-		engine.searchtime=new Date()-starttime;
-		engine.totaltime=new Date()-starttime;
-		cb.apply(engine.context,[0,Q]);
-	};
+				}
+			});
+		} else { //empty search
+			engine.searchtime=new Date()-starttime;
+			engine.totaltime=new Date()-starttime;
+			cb.apply(engine.context,[0,Q]);
+		};
+	});
 }
 
 main.splitPhrase=splitPhrase; //just for debug
