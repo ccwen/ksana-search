@@ -417,7 +417,6 @@ var newQuery =function(engine,query,opts,cb) {
 
 	//last call to child load
 	taskqueue.push(function(data){
-		console.log("final")
 		if (engine.mergePostings || data.termid.length!=0) {
 			phrase_terms.push(data);
 			pc++;
@@ -433,7 +432,6 @@ var newQuery =function(engine,query,opts,cb) {
 	Q.normalize=function() {return engine.analyzer.normalize.apply(engine,arguments);}	
 
 	//invoke task queue
-	console.log(taskqueue)
 	taskqueue.shift()({__empty:true});
 }
 var postingPathFromTokens=function(engine,tokens) {
@@ -554,7 +552,6 @@ var main=function(engine,q,opts,cb){
 			return;
 		};
 		engine.queryCache[q]=Q;
-		console.log("load posting")
 		if (Q.phrases.length) {
 			
 			loadPostings(engine,Q.terms,function(){

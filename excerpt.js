@@ -40,7 +40,7 @@ var hitInRange=function(Q,startvpos,endvpos) {
 		if (!P.posting) continue;
 		var s=plist.indexOfSorted(P.posting,startvpos);
 		var e=plist.indexOfSorted(P.posting,endvpos);
-		var r=P.posting.slice(s,e+1);
+		var r=P.posting.slice(s,e);
 		var width=getPhraseWidths(Q,i,r);
 
 		res=res.concat(r.map(function(vpos,idx){ return [vpos,width[idx],i] }));
@@ -143,6 +143,28 @@ var getFileWithHits=function(engine,Q,range) {
 	}
 	return fileWithHits;
 }
+var calculateRealPos=function(Q,vpos,text,hits) {
+	var out=[];
+	var tokens=Q.tokenize(text).tokens;
+	var i=0,j=0,end=0;
+	var hitstart=0,hitend=0,textnow=0;
+	while (i<tokens.length) {
+		var skip=Q.isSkip(tokens[i]);
+		if (!skip && j<hits.length && vpos===hits[j][0]) {
+			out.push([textnow,0,hits[j][2]]);
+			end=vpos+hits[j][1];
+			j++;
+		}
+		if (vpos==end && out.length) {
+			var start=out[out.length-1][0];
+			out[out.length-1][1]=textnow-start;
+		}
+		textnow+=tokens[i].length;
+		if (!skip) vpos++;
+		i++;
+	}
+	return out;
+}
 var resultlist=function(engine,Q,opts,cb) {
 	var output=[];
 	if (!Q.rawresult || !Q.rawresult.length) {
@@ -204,6 +226,7 @@ var resultlist=function(engine,Q,opts,cb) {
 			if (opts.nohighlight) {
 				hl.text=segs[i];
 				hl.hits=hitInRange(Q,startvpos,endvpos);
+				hl.realHits=calculateRealPos(Q,startvpos,hl.text,hl.hits);
 			} else {
 				var o={nocrlf:true,nospan:true,
 					text:segs[i],startvpos:startvpos, endvpos: endvpos, 
@@ -213,6 +236,7 @@ var resultlist=function(engine,Q,opts,cb) {
 			if (hl.text) {
 				output[i].text=hl.text;
 				output[i].hits=hl.hits;
+				output[i].realHits=hl.realHits;
 				output[i].seq=seq;
 				seq+=hl.hits.length;
 
