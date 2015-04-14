@@ -83,8 +83,8 @@ var _highlightFile=function(engine,fileid,opts,cb){
 }
 var api={
 	search:_search
-	//,highlightSeg:_highlightSeg
-	//,highlightFile:_highlightFile
-	//,excerpt:require("./excerpt")
+	,highlightSeg:_highlightSeg
+	,highlightFile:_highlightFile
+	,excerpt:require("./excerpt")	
 }
 module.exports=api;
