@@ -417,7 +417,7 @@ var newQuery =function(engine,query,opts,cb) {
 
 	//last call to child load
 	taskqueue.push(function(data){
-		if (engine.mergePostings || data.termid.length!=0) {
+		if (engine.mergePostings || (data.termid && data.termid.length!=0))  {
 			phrase_terms.push(data);
 			pc++;
 		}
