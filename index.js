@@ -30,6 +30,7 @@ var _search=function(engine,q,opts,cb,context) {
 			cb=opts;
 			opts={};
 		}
+		if (!opts) opts={};
 		opts.q=q;
 		opts.dbid=engine;
 		kde.open(opts.dbid,function(err,db){
