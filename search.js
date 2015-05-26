@@ -426,7 +426,8 @@ var newQuery =function(engine,query,opts,cb) {
 	});
 
 
-	var Q={dbname:engine.dbname,engine:engine,opts:opts,query:query,phrases:phrase_terms,terms:terms,segWithHit:segWithHit};
+	var Q={dbname:engine.dbname,engine:engine,opts:opts,query:query,
+		phrases:phrase_terms,terms:terms,segWithHit:segWithHit,rawresult:[]};
 	Q.tokenize=function() {return engine.analyzer.tokenize.apply(engine,arguments);}
 	Q.isSkip=function() {return engine.analyzer.isSkip.apply(engine,arguments);}
 	Q.normalize=function() {return engine.analyzer.normalize.apply(engine,arguments);}	
@@ -573,7 +574,7 @@ var main=function(engine,q,opts,cb){
 				var fileoffsets=Q.engine.get("fileoffsets");
 				//console.log("search opts "+JSON.stringify(opts));
 
-				if (!Q.byFile && Q.rawresult && !opts.nogroup) {
+				if (!Q.byFile && Q.rawresult && Q.rawresult.length && !opts.nogroup) {
 					Q.byFile=plist.groupbyposting2(Q.rawresult, fileoffsets);
 					Q.byFile.shift();Q.byFile.pop();
 					Q.byFolder=groupByFolder(engine,Q.byFile);
