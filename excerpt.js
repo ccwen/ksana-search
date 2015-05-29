@@ -171,7 +171,6 @@ var resultlist=function(engine,Q,opts,cb) {
 		cb(output);
 		return;
 	}
-
 	if (opts.range) {
 		if (opts.range.maxhit && !opts.range.maxfile) {
 			opts.range.maxfile=opts.range.maxhit;
@@ -194,9 +193,11 @@ var resultlist=function(engine,Q,opts,cb) {
 		var segoffsets=engine.getFileSegOffsets(nfile);
 		var segnames=engine.getFileSegNames(nfile);
 		files[nfile]={segoffsets:segoffsets};
+
 		var segwithhit=plist.groupbyposting2(Q.byFile[ nfile ],  segoffsets);
 		//if (segoffsets[0]==1)
 		//segwithhit.shift(); //the first item is not used (0~Q.byFile[0] )
+
 
 		for (var j=0; j<segwithhit.length;j++) {
 			if (!segwithhit[j].length) continue;
@@ -383,13 +384,6 @@ var getSegSync=function(engine,fileid,segid) {
 	return {text:text,file:fileid,seg:segid,segname:segnames[segid]};
 }
 
-var getRange=function(engine,start,end,cb) {
-	var fileoffsets=engine.get("fileoffsets");
-	//var pagepaths=["fileContents",];
-	//find first page and last page
-	//create get paths
-
-}
 
 var getFile=function(engine,fileid,cb) {
 	var filename=engine.get("filenames")[fileid];
@@ -471,7 +465,5 @@ module.exports={resultlist:resultlist,
 	highlightSeg:highlightSeg,
 	getSeg:getSeg,
 	highlightFile:highlightFile,
-	getFile:getFile
-	//highlightRange:highlightRange,
-  //getRange:getRange,
+	getFile:getFile,
 };
