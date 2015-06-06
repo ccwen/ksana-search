@@ -1,5 +1,5 @@
 var plist=require("./plist");
-
+var fetchtext=require("./fetchtext");
 var getPhraseWidths=function (Q,phraseid,vposs) {
 	var res=[];
 	for (var i in vposs) {
@@ -355,51 +355,6 @@ var addtoken=function(text,startvpos) {
 	}		
 	return output;
 }
-var getSeg=function(engine,fileid,segid,opts,cb,context) {
-	if (typeof opts=="function") {
-		context=cb;
-		cb=opts;
-		opts={};
-	}
-
-	var fileOffsets=engine.get("fileoffsets");
-	var segpaths=["filecontents",fileid,segid];
-	var segnames=engine.getFileSegNames(fileid);
-	var vpos=engine.fileSegToVpos(fileid,segid);
-
-	engine.get(segpaths,function(text){
-		var out=text;
-		if (opts.span) out=addspan.apply(engine,[text,vpos]);
-		else if(opts.token) out=addtoken.apply(engine,[text,vpos]);
-		cb.apply(context||engine.context,[{text:out,file:fileid,seg:segid,segname:segnames[segid]}]);
-	});
-}
-
-var getSegSync=function(engine,fileid,segid) {
-	var fileOffsets=engine.get("fileoffsets");
-	var segpaths=["filecontents",fileid,segid];
-	var segnames=engine.getFileSegNames(fileid);
-
-	var text=engine.get(segpaths);
-	return {text:text,file:fileid,seg:segid,segname:segnames[segid]};
-}
-
-
-var getFile=function(engine,fileid,cb) {
-	var filename=engine.get("filenames")[fileid];
-	var segnames=engine.getFileSegNames(fileid);
-	var filestart=engine.get("fileoffsets")[fileid];
-	var offsets=engine.getFileSegOffsets(fileid);
-	var pc=0;
-	engine.get(["fileContents",fileid],true,function(data){
-		var text=data.map(function(t,idx) {
-			if (idx==0) return ""; 
-			var pb='<pb n="'+segnames[idx]+'"></pb>';
-			return pb+t;
-		});
-		cb({texts:data,text:text.join(""),segnames:segnames,filestart:filestart,offsets:offsets,file:fileid,filename:filename}); //force different token
-	});
-}
 
 var highlightRange=function(Q,startvpos,endvpos,opts,cb){
 	//not implement yet
@@ -423,7 +378,7 @@ var highlightFile=function(Q,fileid,opts,cb) {
 				var startvpos=segoffsets[i];
 				var endvpos=segoffsets[i+1];
 				var segnames=Q.engine.getFileSegNames(fileid);
-				var seg=getSegSync(Q.engine, fileid,i+1);
+				var seg=fetchtext.segSync(Q.engine, fileid,i+1);
 				var opt={text:seg.text,hits:null,tag:'hl',vpos:startvpos,
 					fulltext:true,nospan:opts.nospan,nocrlf:opts.nocrlf};
 				var segname=segnames[i+1];
@@ -448,7 +403,7 @@ var highlightSeg=function(Q,fileid,segid,opts,cb,context) {
 	var endvpos=segoffsets[segid];
 	var segnames=Q.engine.getFileSegNames(fileid);
 
-	this.getSeg(Q.engine,fileid,segid,function(res){
+	fetchtext.seg(Q.engine,fileid,segid,function(res){
 		var opt={text:res.text,hits:null,vpos:startvpos,fulltext:true,
 			nospan:opts.nospan,nocrlf:opts.nocrlf};
 			opt.hits=hitInRange(Q,startvpos,endvpos);
@@ -460,10 +415,22 @@ var highlightSeg=function(Q,fileid,segid,opts,cb,context) {
 		cb.apply(context||Q.engine.context,[{text:injectTag(Q,opt),seg:segid,file:fileid,hits:opt.hits,segname:segname}]);
 	});
 }
+
+var highlightRange=function(Q,opts,cb,context){
+	fetchtext.range.call(opts.start,opts.end,function(){
+		opt.hits=hitInRange(Q,opts.start,opts.end);
+		if (opts.renderTags) {
+			opt.tags=tagsInRange(Q,opts.renderTags,opts.start,opts.end);
+		}
+		var segname=segnames[segid];
+		cb.apply(context||Q.engine.context,[{text:injectTag(Q,opt),hits:opt.hits}]);
+	})
+}
+
+
 module.exports={resultlist:resultlist, 
 	hitInRange:hitInRange, 
 	highlightSeg:highlightSeg,
-	getSeg:getSeg,
 	highlightFile:highlightFile,
-	getFile:getFile,
+	highlightRange:highlightRange,
 };
