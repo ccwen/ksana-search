@@ -43,15 +43,18 @@ var getPage=function(engine,pageid,cb,context) {
 		var vals=data[0], vpos=data[1], sorted=data[2],sorted_idx=data[3];
 		var i=indexOfSorted(sorted,pageid);
 		var idx=sorted_idx[i];
+		var res={start:vpos[idx]+1,end:vpos[idx+1],text:""};
 		if (vals[idx]==pageid) {
-			var res={start:vpos[idx]+1,end:vpos[idx+1],text:""};
 			var nextpageid=vals[idx+1];
 			if (!nextpageid) res.end=engine.get("meta").vsize;
-			getRange.call(engine,res.start,res.end,function(pagetext){
-				res.text=pagetext;
-				cb.call(context,res);
-			})
+		} else {//always return top page
+			res={start:0,end:vpos[0],text:""};
 		}
+		getRange.call(engine,res.start,res.end,function(pagetext){
+			res.text=pagetext;
+			cb.call(context,res);
+		});
+
 	})
 }
 var getTextByTag=function(tag,cb){
@@ -74,8 +77,10 @@ var getRange=function(start,end,cb,context){
 	}
 	var startsegvpos=this.fileSegToVpos(fseg.file,fseg.seg);
 	var endsegvpos=this.fileSegToVpos(fseg_end.file,fseg_end.seg);
+	//console.log(fseg,startsegvpos,endsegvpos);
 	var startvpos=start-startsegvpos;
 	var lastvpos=end-endsegvpos;
+
 	//console.log(start,end,startvpos,lastvpos);
 	var combinetext=function(text,idx,texts) {
 		var out=text;
