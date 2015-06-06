@@ -356,9 +356,6 @@ var addtoken=function(text,startvpos) {
 	return output;
 }
 
-var highlightRange=function(Q,startvpos,endvpos,opts,cb){
-	//not implement yet
-}
 
 var highlightFile=function(Q,fileid,opts,cb) {
 	if (typeof opts=="function") {
@@ -416,14 +413,18 @@ var highlightSeg=function(Q,fileid,segid,opts,cb,context) {
 	});
 }
 
-var highlightRange=function(Q,opts,cb,context){
-	fetchtext.range.call(opts.start,opts.end,function(){
-		opt.hits=hitInRange(Q,opts.start,opts.end);
+var highlightRange=function(Q,start,end,opts,cb,context){
+	fetchtext.range.call(Q.engine,start,end,function(text){
+		var opt={text:text,fulltext:true,nospan:true};
+		opt.hits=hitInRange(Q,start,end);
+
 		if (opts.renderTags) {
-			opt.tags=tagsInRange(Q,opts.renderTags,opts.start,opts.end);
+			opt.tags=tagsInRange(Q,opts.renderTags,start,end);
 		}
-		var segname=segnames[segid];
-		cb.apply(context||Q.engine.context,[{text:injectTag(Q,opt),hits:opt.hits}]);
+		opt.vpos=start-1; //getPageRange +1 , 
+		var highlighted=injectTag(Q,opt);
+		//console.log(highlighted)
+		cb.apply(context||Q.engine.context,[{text:highlighted,hits:opt.hits}]);
 	})
 }
 

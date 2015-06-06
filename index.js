@@ -25,7 +25,9 @@ var prepareEngineForSearch=function(engine,cb){
 var openEngine=function(dbid_or_engine,cb,context) {
 	if (typeof dbid_or_engine=="string") {//browser only
 		var kde=require("ksana-database");
+
 		kde.open(dbid_or_engine,function(err,engine){
+
 			if (!err) {
 				prepareEngineForSearch(engine,function(){
 					cb.call(context,engine);
@@ -33,13 +35,15 @@ var openEngine=function(dbid_or_engine,cb,context) {
 			} else throw err;
 		});
 	} else {
-		prepareEngineForSearch(engine,function(){
-			cb.call(context,engine);
+		prepareEngineForSearch(dbid_or_engine,function(){
+			cb.call(context,dbid_or_engine);
 		});
 	}
 }
 var _search=function(engine,q,opts,cb,context) {
+
 	openEngine(engine,function(engine){
+
 		if (typeof opts=="function") { //user didn't supply options
 			if (typeof cb=="object")context=cb;
 			cb=opts;
@@ -82,9 +86,9 @@ var _highlightRange=function(engine,opts,cb,context){
 	})
 }
 
-var _highlightPage=function(engine,opts,cb,context){
-	openEngine(engine,function(engine){
-		fetchtext.page(engine,opts.id,function(res){
+var _highlightPage=function(_engine,opts,cb,context){
+	openEngine(_engine,function(engine){
+		fetchtext.pageRange(engine,opts.id,function(res){
 			if (!res) {
 				console.error("error page",opts.page)
 				return;

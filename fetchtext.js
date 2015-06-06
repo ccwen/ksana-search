@@ -38,6 +38,14 @@ var getKeyByTagName=function(tagname) {
 	return out;
 }
 var getPage=function(engine,pageid,cb,context) {
+	getPageRange(engine,pageid,function(res){
+		getRange.call(engine,res.start,res.end,function(pagetext){
+			res.text=pagetext;
+			cb.call(context,res);
+		});
+	})
+}
+var getPageRange=function(engine,pageid,cb,context) {
 	var keys=getKeyByTagName("pb");
 	engine.get(keys,function(data){
 		var vals=data[0], vpos=data[1], sorted=data[2],sorted_idx=data[3];
@@ -50,11 +58,7 @@ var getPage=function(engine,pageid,cb,context) {
 		} else {//always return top page
 			res={start:0,end:vpos[0],text:""};
 		}
-		getRange.call(engine,res.start,res.end,function(pagetext){
-			res.text=pagetext;
-			cb.call(context,res);
-		});
-
+		cb.call(context,res);
 	})
 }
 var getTextByTag=function(tag,cb){
@@ -117,4 +121,4 @@ var getFile=function(engine,fileid,cb) {
 	});
 }
 
-module.exports=	{file:getFile,seg:getSeg,range:getRange,page:getPage}
+module.exports=	{file:getFile,seg:getSeg,range:getRange,page:getPage,pageRange:getPageRange}
