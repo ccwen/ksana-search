@@ -119,4 +119,4 @@ var getFile=function(engine,fileid,cb) {
 	});
 }
 
-module.exports=	{file:getFile,seg:getSeg,range:getRange,page:getPage,pageRange:getPageRange}
+module.exports=	{file:getFile,seg:getSeg,segSync:getSegSync,range:getRange,page:getPage,pageRange:getPageRange};
