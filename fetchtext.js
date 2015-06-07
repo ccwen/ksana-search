@@ -61,9 +61,7 @@ var getPageRange=function(engine,pageid,cb,context) {
 		cb.call(context,res);
 	})
 }
-var getTextByTag=function(tag,cb){
 
-}
 var getRange=function(start,end,cb,context){
 	var fseg=this.fileSegFromVpos(start);
 	var fseg_end=this.fileSegFromVpos(end);

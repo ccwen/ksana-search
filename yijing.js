@@ -7,5 +7,6 @@ var config={
 	,glob:"*.xml"
 	,segSeparator:"_.id"
 	,paging:"pb"
+	,toc:"hn"
 };
 module.exports=config;
