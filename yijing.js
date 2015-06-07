@@ -3,10 +3,10 @@ var config={
 	,meta:{
 		config:"simple1"	
 		,template:"simple"
+		,paging:"pb"
+		,toc:"hn"
 	}
-	,glob:"*.xml"
 	,segSeparator:"_.id"
-	,paging:"pb"
-	,toc:"hn"
+	,glob:"*.xml"
 };
 module.exports=config;
