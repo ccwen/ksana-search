@@ -109,7 +109,7 @@ var getFile=function(engine,fileid,cb) {
 	var filestart=engine.get("fileoffsets")[fileid];
 	var offsets=engine.getFileSegOffsets(fileid);
 	var pc=0;
-	engine.get(["fileContents",fileid],true,function(data){
+	engine.get(["filecontents",fileid],true,function(data){
 		var text=data.map(function(t,idx) {
 			if (idx==0) return ""; 
 			var pb='<pb n="'+segnames[idx]+'"></pb>';
