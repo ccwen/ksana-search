@@ -58,6 +58,7 @@ var _search=function(engine,q,opts,cb,context) {
 var fetchtext=require("./fetchtext");
 var _highlightSeg=function(engine,fileid,segid,opts,cb,context){
 	openEngine(engine,function(engine){
+		/*
 		if (!opts.q) {
 			if (!engine.analyzer) {
 				var analyzer=require("ksana-analyzer");
@@ -66,10 +67,11 @@ var _highlightSeg=function(engine,fileid,segid,opts,cb,context){
 			}
 			fetchtext.seg(engine,fileid,segid,opts,cb,context);
 		} else {
+		*/
 			_search(engine,opts.q,opts,function(err,Q){
 				api.excerpt.highlightSeg(Q,fileid,segid,opts,cb,context);
 			});			
-		}		
+		//}		
 	});
 }
 

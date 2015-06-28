@@ -409,7 +409,8 @@ var highlightSeg=function(Q,fileid,segid,opts,cb,context) {
 			}
 
 		var segname=segnames[segid];
-		cb.apply(context||Q.engine.context,[{text:injectTag(Q,opt),seg:segid,file:fileid,hits:opt.hits,segname:segname}]);
+		cb.apply(context||Q.engine.context,[{text:injectTag(Q,opt),rawtext:res.text,
+			tags:opt.tags,seg:segid,file:fileid,hits:opt.hits,segname:segname}]);
 	});
 }
 
@@ -424,7 +425,7 @@ var highlightRange=function(Q,start,end,opts,cb,context){
 		opt.vpos=start-1; //getPageRange +1 , 
 		var highlighted=injectTag(Q,opt);
 		//console.log(highlighted)
-		cb.apply(context||Q.engine.context,[{text:highlighted,hits:opt.hits}]);
+		cb.apply(context||Q.engine.context,[{text:highlighted,rawtext:text,tags:opt.tags,hits:opt.hits}]);
 	})
 }
 
