@@ -303,7 +303,12 @@ var injectTag=function(Q,opts){
 
 				if (classes || !opts.nospan) {
 					output+='<span vpos="'+vpos+'"';
-					if (classes) classes=' class="'+classes+'"';
+					if (classes) {
+						classes+= (tagstart==vpos)?" "+tagclass+"-first":"";
+						classes+= (tagend-1==vpos)?" "+tagclass+"-last":"";
+						classes=' class="'+classes+'"';
+					}
+						
 					output+=classes+'>';
 					output+=token+'</span>';
 				} else {
