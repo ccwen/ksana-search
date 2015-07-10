@@ -40,7 +40,10 @@ var hitInRange=function(Q,startvpos,endvpos) {
 		if (!P.posting) continue;
 		var s=plist.indexOfSorted(P.posting,startvpos);
 		var e=plist.indexOfSorted(P.posting,endvpos);
+		//work around to include last item
+		if (s===e&& e==P.posting.length-1) e++;
 		var r=P.posting.slice(s,e);
+		//console.log("s,e",s,e,"r",r)
 		var width=getPhraseWidths(Q,i,r);
 
 		res=res.concat(r.map(function(vpos,idx){ return [vpos,width[idx],i] }));
@@ -154,18 +157,29 @@ var calculateRealPos=function(Q,vpos,text,hits) {
 	var offsets=tokenized.offsets;
 	var i=0,j=0,end=0;
 	var hitstart=0,hitend=0,textnow=0;
+	//console.log("text",text,'len',text.length,"hits",hits)
 	while (i<tokens.length) {
+		//console.log("textnow",textnow,"token",tokens[i],"vpos",vpos)
+		if (vpos===end && out.length) {
+			var len=textnow-out[out.length-1][0];
+			out[out.length-1][1]=len;
+		}
+
 		var skip=Q.isSkip(tokens[i]);
 		if (!skip && j<hits.length && vpos===hits[j][0]) {
-			var offset=offsets[i+1]||text.length;
-			out.push([textnow, offset-textnow ,hits[j][2]]);
+			out.push([textnow, null ,hits[j][2]]);
 			end=vpos+hits[j][1];
 			j++;
-		}		
+		}
 		textnow+=tokens[i].length;
 		if (!skip) vpos++;
 		i++;
 	}
+	if (vpos===end && out.length) {
+		var len=textnow-out[out.length-1][0];
+		out[out.length-1][1]=textnow-out[out.length-1][0];
+	}
+
 	return out;
 }
 var resultlist=function(engine,Q,opts,cb) {
@@ -218,7 +232,7 @@ var resultlist=function(engine,Q,opts,cb) {
 	engine.get(segpaths,function(segs){
 		var seq=0;
 		if (segs) for (var i=0;i<segs.length;i++) {
-			var startvpos=files[output[i].file].segoffsets[output[i].seg-1] ||0;
+			var startvpos=files[output[i].file].segoffsets[output[i].seg-1] ||1;
 			var endvpos=files[output[i].file].segoffsets[output[i].seg];
 			var hl={};
 
@@ -231,6 +245,8 @@ var resultlist=function(engine,Q,opts,cb) {
 				hl.text=segs[i];
 				hl.hits=hitInRange(Q,startvpos,endvpos);
 				hl.realHits=calculateRealPos(Q,startvpos,hl.text,hl.hits);
+				//console.log("text",hl.text,"startvpos",startvpos,"endvpos",endvpos);
+				//console.log("hits",hl.hits,"realhits",hl.realHits);
 			} else {
 				var o={nocrlf:true,nospan:true,
 					text:segs[i],startvpos:startvpos, endvpos: endvpos, 
