@@ -55,6 +55,10 @@ var hitInRange=function(Q,startvpos,endvpos) {
 	return res;
 }
 
+var realHitInRange=function(Q,startvpos,endvpos,text){
+	var hits=hitInRange(Q,startvpos,endvpos);
+	return calculateRealPos(Q,startvpos,text,hits);
+}
 var tagsInRange=function(Q,renderTags,startvpos,endvpos) {
 	var res=[];
 	if (typeof renderTags=="string") renderTags=[renderTags];
@@ -145,20 +149,19 @@ var getFileWithHits=function(engine,Q,range) {
 }
 var calculateRealPos=function(Q,vpos,text,hits) {
 	var out=[];
-	var tokens=Q.tokenize(text).tokens;
+	var tokenized=Q.tokenize(text);
+	var tokens=tokenized.tokens;
+	var offsets=tokenized.offsets;
 	var i=0,j=0,end=0;
 	var hitstart=0,hitend=0,textnow=0;
 	while (i<tokens.length) {
 		var skip=Q.isSkip(tokens[i]);
 		if (!skip && j<hits.length && vpos===hits[j][0]) {
-			out.push([textnow,0,hits[j][2]]);
+			var offset=offsets[i+1]||text.length;
+			out.push([textnow, offset-textnow ,hits[j][2]]);
 			end=vpos+hits[j][1];
 			j++;
-		}
-		if (vpos==end && out.length) {
-			var start=out[out.length-1][0];
-			out[out.length-1][1]=textnow-start;
-		}
+		}		
 		textnow+=tokens[i].length;
 		if (!skip) vpos++;
 		i++;
@@ -437,6 +440,7 @@ var highlightRange=function(Q,start,end,opts,cb,context){
 
 module.exports={resultlist:resultlist, 
 	hitInRange:hitInRange, 
+	realHitInRange:realHitInRange, 
 	highlightSeg:highlightSeg,
 	highlightFile:highlightFile,
 	highlightRange:highlightRange,
