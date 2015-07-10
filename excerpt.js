@@ -197,6 +197,10 @@ var resultlist=function(engine,Q,opts,cb) {
 		if (!opts.range.end) {
 			opts.range.end=Number.MAX_SAFE_INTEGER;
 		}
+
+		if (opts.range.from) {
+			opts.range.start=engine.txtid2vpos(engine.nextTxtid(opts.range.from));
+		}
 	}
 	var fileWithHits=getFileWithHits(engine,Q,opts.range);
 	if (!fileWithHits.length) {
@@ -208,23 +212,26 @@ var resultlist=function(engine,Q,opts,cb) {
 	for (var i=0;i<fileWithHits.length;i++) {
 		var nfile=fileWithHits[i];
 		var segoffsets=engine.getFileSegOffsets(nfile);
+		//console.log("file",nfile,"segoffsets",segoffsets)
 		var segnames=engine.getFileSegNames(nfile);
 		files[nfile]={segoffsets:segoffsets};
 
 		var segwithhit=plist.groupbyposting2(Q.byFile[ nfile ],  segoffsets);
+		segwithhit.shift();
 		//if (segoffsets[0]==1)
 		//segwithhit.shift(); //the first item is not used (0~Q.byFile[0] )
-
-
 		for (var j=0; j<segwithhit.length;j++) {
+			var segoffset=segoffsets[j];
 			if (!segwithhit[j].length) continue;
 			//var offsets=segwithhit[j].map(function(p){return p- fileOffsets[i]});
-			if (segoffsets[j]>opts.range.end) break;
+			
+			if (segoffset<opts.range.start) continue;
+			if (segoffset>opts.range.end) break;
+
 			output.push(  {file: nfile, seg:j,  segname:segnames[j]});
 			if (output.length>opts.range.maxseg) break;
 		}
 	}
-
 	var segpaths=output.map(function(p){
 		return ["filecontents",p.file,p.seg];
 	});
@@ -232,15 +239,11 @@ var resultlist=function(engine,Q,opts,cb) {
 	engine.get(segpaths,function(segs){
 		var seq=0;
 		if (segs) for (var i=0;i<segs.length;i++) {
-			var startvpos=files[output[i].file].segoffsets[output[i].seg-1] ||1;
-			var endvpos=files[output[i].file].segoffsets[output[i].seg];
+			var startvpos=files[output[i].file].segoffsets[output[i].seg];
+			var endvpos=files[output[i].file].segoffsets[output[i].seg+1]||engine.get("meta").vsize;
+			//console.log(startvpos,endvpos)
 			var hl={};
 
-			if (opts.range && opts.range.start  ) {
-				if ( startvpos<opts.range.start) startvpos=opts.range.start;
-			//	if (endvpos>opts.range.end) endvpos=opts.range.end;
-			}
-			
 			if (opts.nohighlight) {
 				hl.text=segs[i];
 				hl.hits=hitInRange(Q,startvpos,endvpos);
