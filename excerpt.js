@@ -423,8 +423,8 @@ var highlightSeg=function(Q,fileid,segid,opts,cb,context) {
 
 	if (!Q || !Q.engine) return cb.apply(context,[null]);
 	var segoffsets=Q.engine.getFileSegOffsets(fileid);
-	var startvpos=segoffsets[segid-1];
-	var endvpos=segoffsets[segid];
+	var startvpos=segoffsets[segid];
+	var endvpos=segoffsets[segid+1];
 	var segnames=Q.engine.getFileSegNames(fileid);
 
 	fetchtext.seg(Q.engine,fileid,segid,function(res){
