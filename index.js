@@ -23,7 +23,8 @@ var prepareEngineForSearch=function(engine,cb){
 }
 
 var openEngine=function(dbid_or_engine,cb,context) {
-	if (typeof dbid_or_engine=="string") {//browser only
+	var localfile=(typeof File!=="undefined" && dbid_or_engine.constructor==File);
+	if (typeof dbid_or_engine=="string" || localfile) {//browser only
 		var kde=require("ksana-database");
 
 		kde.open(dbid_or_engine,function(err,engine){
