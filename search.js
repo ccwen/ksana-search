@@ -559,7 +559,8 @@ var main=function(engine,q,opts,cb){
 				if (!Q.phrases[0].posting) {
 					engine.searchtime=new Date()-starttime;
 					engine.totaltime=engine.searchtime;
-					cb.apply(engine.context,["no such posting",{rawresult:[]}]);
+					Q.rawresult=[];
+					cb.apply(engine.context,["no such posting",Q]);
 					return;			
 				}
 				
