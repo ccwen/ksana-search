@@ -199,7 +199,7 @@ var resultlist=function(engine,Q,opts,cb) {
 		}
 
 		if (opts.range.from) {
-			opts.range.start=engine.txtid2vpos(engine.nextTxtid(opts.range.from));
+			opts.range.start=engine.txtid2vpos(engine.nextTxtid(opts.range.from))+1;
 		}
 	}
 	var fileWithHits=getFileWithHits(engine,Q,opts.range);
@@ -229,8 +229,9 @@ var resultlist=function(engine,Q,opts,cb) {
 			if (segoffset>opts.range.end) break;
 
 			output.push(  {file: nfile, seg:j,  segname:segnames[j]});
-			if (output.length>opts.range.maxseg) break;
+			if (output.length>=opts.range.maxseg) break;
 		}
+		if (output.length>=opts.range.maxseg) break;
 	}
 	var segpaths=output.map(function(p){
 		return ["filecontents",p.file,p.seg];
