@@ -67,6 +67,9 @@ var expandTerm=function(engine,regex) {
 var isWildcard=function(raw) {
 	return !!raw.match(/[\*\?]/);
 }
+var hasWildcard=function(raw) {
+	return ~raw.indexOf("?") || ~raw.indexOf("*");
+}
 
 var isOrTerm=function(term) {
 	term=term.trim();
@@ -130,7 +133,7 @@ var parseNumber=function(raw) {
 	}
 }
 var parseWildcard=function(raw) {
-	var n=parseNumber(raw) || 1;
+	var n=parseNumber(raw.substr(1)) || 1;
 	var qcount=raw.split('?').length-1;
 	var scount=raw.split('*').length-1;
 	var type='';
@@ -305,11 +308,21 @@ var fastPhrase=function(engine,phrase,cb) {
 	});
 }
 var slowPhrase=function(engine,terms,phrase) {
-	var j=0,tokens=engine.analyzer.tokenize(phrase).tokens;
+	var parts=[],lastidx=0;
+	phrase.replace(/[ ་]?([\?\*]\d?)[ ་]?/g,function(m,m1,idx){
+		s=phrase.substring(lastidx,idx);
+		parts.push(s);
+		parts.push(m1);
+		lastidx=idx+m.length;
+	});
+
+	parts.push(phrase.substring(lastidx));
+	
+	var j=0;//,tokens=engine.analyzer.tokenize(phrase).tokens;
 	var phrase_term=newPhrase();
 	var termid=0;
-	while (j<tokens.length) {
-		var raw=tokens[j], termlength=1;
+	while (j<parts.length) {
+		var raw=parts[j], termlength=1;
 		if (isWildcard(raw)) {
 			if (phrase_term.termid.length==0)  { //skip leading wild card
 				j++
@@ -320,7 +333,7 @@ var slowPhrase=function(engine,terms,phrase) {
 			phrase_term.termid.push(termid);
 			phrase_term.termlength.push(termlength);
 		} else if (isOrTerm(raw)){
-			var term=orTerms.apply(this,[tokens,j]);
+			var term=orTerms.apply(this,[parts,j]);
 			if (term) {
 				terms.push(term);
 				termid=terms.length-1;
@@ -330,15 +343,8 @@ var slowPhrase=function(engine,terms,phrase) {
 			phrase_term.termid.push(termid);
 			phrase_term.termlength.push(termlength);
 		} else {
-			var phrase="";
-			while (j<tokens.length) {
-				if (!(isWildcard(tokens[j]) || isOrTerm(tokens[j]))) {
-					phrase+=tokens[j];
-					j++;
-				} else break;
-			}
 
-			var splitted=splitPhrase(engine,phrase);
+			var splitted=splitPhrase(engine,parts[j]);
 			for (var i=0;i<splitted.tokens.length;i++) {
 				var term=parseTerm(engine,splitted.tokens[i]);
 				if (!term) continue;
@@ -404,8 +410,7 @@ var newQuery =function(engine,query,opts,cb) {
 				}
 			}
 
-			if (isSimplePhrase(phrases[pc]) && engine.mergePostings ) {
-				
+			if (isSimplePhrase(phrases[pc]) && engine.mergePostings && !hasWildcard(phrases[pc]) ) {
 				fastPhrase(engine,phrases[pc],function(res){
 					taskqueue.shift()(res);
 				});
@@ -606,4 +611,5 @@ var main=function(engine,q,opts,cb){
 }
 
 main.splitPhrase=splitPhrase; //just for debug
+main.slowPhrase=slowPhrase;
 module.exports=main;

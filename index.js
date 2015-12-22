@@ -128,5 +128,7 @@ var api={
 	,highlightRange:_highlightRange
 	,searchInTag:_searchInTag
 	,excerpt:require("./excerpt")	
+	,open:openEngine
+	,_search:dosearch
 }
 module.exports=api;
