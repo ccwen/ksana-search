@@ -578,17 +578,17 @@ var main=function(engine,q,opts,cb){
 					phrase_intersect(engine,Q);
 				}
 				var fileoffsets=Q.engine.get("fileoffsets");
-				//console.log("search opts "+JSON.stringify(opts));
-
-				if (!Q.byFile && Q.rawresult && Q.rawresult.length && !opts.nogroup) {
-					Q.byFile=plist.groupbyposting2(Q.rawresult, fileoffsets);
-					Q.byFile.shift();Q.byFile.pop();
-					Q.byFolder=groupByFolder(engine,Q.byFile);
-
-					countFolderFile(Q);
-				}
-
+				//console.log("search opts "+JSON.stringify(opts));	
+				
 				if (opts.range) {
+					if (!Q.byFile && Q.rawresult && Q.rawresult.length) {
+						//console.log("grouping",Q.rawresult.length,fileoffsets.length)
+						Q.byFile=plist.groupbyposting2(Q.rawresult, fileoffsets);
+						Q.byFile.shift();Q.byFile.pop();
+						Q.byFolder=groupByFolder(engine,Q.byFile);
+						countFolderFile(Q);
+					}
+
 					engine.searchtime=new Date()-starttime;
 					excerpt.resultlist(engine,Q,opts,function(data) { 
 						//console.log("excerpt ok");
@@ -597,6 +597,7 @@ var main=function(engine,q,opts,cb){
 						cb.apply(engine.context,[0,Q]);
 					});
 				} else {
+
 					engine.searchtime=new Date()-starttime;
 					engine.totaltime=new Date()-starttime;
 					cb.apply(engine.context,[0,Q]);

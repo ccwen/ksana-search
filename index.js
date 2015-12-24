@@ -3,7 +3,6 @@
 
 //  need a KDE instance to be functional
 
-var bsearch=require("./bsearch");
 var dosearch=require("./search");
 
 var prepareEngineForSearch=function(engine,cb){
