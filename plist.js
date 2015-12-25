@@ -97,7 +97,7 @@ var groupbyposting2=function(arr,gposting) { //absolute vpos
     p++;
   }
   //remaining
-  while(i<arr.length) out[out.length-1].push(arr[i++]-gposting[gposting.length-1]);
+  while(i<arr.length) out[out.length-1].push(arr[i++]);
   return out;
 }
 var groupbyblock2 = function(ar, ntoken,slotshift,opts) {

@@ -597,7 +597,6 @@ var main=function(engine,q,opts,cb){
 						cb.apply(engine.context,[0,Q]);
 					});
 				} else {
-
 					engine.searchtime=new Date()-starttime;
 					engine.totaltime=new Date()-starttime;
 					cb.apply(engine.context,[0,Q]);
