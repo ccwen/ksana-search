@@ -60,7 +60,7 @@ var hitInRange=function(Q,startvpos,endvpos) {
 
 var realHitInRange=function(Q,startvpos,endvpos,text){
 	var hits=hitInRange(Q,startvpos,endvpos);
-	return calculateRealPos(Q,startvpos,text,hits);
+	return calculateRealPos(Q.tokenize,Q.isSkip,startvpos,text,hits);
 }
 var tagsInRange=function(Q,renderTags,startvpos,endvpos) {
 	var res=[];
@@ -150,12 +150,13 @@ var getFileWithHits=function(engine,Q,range) {
 	}
 	return fileWithHits;
 }
-var calculateRealPos=function(Q,vpos,text,hits) {
+
+var calculateRealPos=function(_tokenize,_isSkip,vpos,text,hits) {
 	var out=[];
-	var tokenized=Q.tokenize(text);
+	var tokenized=_tokenize(text);
 	var tokens=tokenized.tokens;
 	var offsets=tokenized.offsets;
-	var i=0,j=0,end=0;
+	var i=0,j=0,end=0, hit;
 	var hitstart=0,hitend=0,textnow=0;
 	//console.log("text",text,'len',text.length,"hits",hits)
 	while (i<tokens.length) {
@@ -165,9 +166,11 @@ var calculateRealPos=function(Q,vpos,text,hits) {
 			out[out.length-1][1]=len;
 		}
 
-		var skip=Q.isSkip(tokens[i]);
+		var skip=_isSkip(tokens[i]);
 		if (!skip && j<hits.length && vpos===hits[j][0]) {
-			out.push([textnow, null ,hits[j][2]]);
+			hit=[textnow, null];
+			hits[j][2]&& hit.push(hits[j][2]);
+			out.push( hit);//len will be resolve later
 			end=vpos+hits[j][1];
 			j++;
 		}
@@ -464,4 +467,5 @@ module.exports={resultlist:resultlist,
 	highlightSeg:highlightSeg,
 	highlightFile:highlightFile,
 	highlightRange:highlightRange,
+	calculateRealPos:calculateRealPos
 };

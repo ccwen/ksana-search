@@ -3,20 +3,10 @@
 
 //  need a KDE instance to be functional
 
-var dosearch=require("./search");
-
+var mainsearch=require("./search");
+var _excerpt=require("./excerpt")	;
 var prepareEngineForSearch=function(engine,cb){
-	if (engine.get("tokens") && engine.analyzer) {
-		cb();
-		return;
-	}
-
-	engine.get([["tokens"],["postingslength"]],function(){
-		if (!engine.analyzer) {
-			var analyzer=require("ksana-analyzer");
-			var config=engine.get("meta").config;
-			engine.analyzer=analyzer.getAPI(config);			
-		}
+	engine.get([["tokens"],["postingslength"],{recursive:true}],function(){
 		cb();
 	});
 }
@@ -52,7 +42,7 @@ var _search=function(engine,q,opts,cb,context) {
 		if (!opts) opts={};
 		opts.q=q;
 		opts.dbid=engine;
-		return dosearch(engine,q,opts,cb);
+		return mainsearch(engine,q,opts,cb);
 	});
 }
 var fetchtext=require("./fetchtext");
@@ -119,6 +109,14 @@ var _searchInTag=function(engine,opts,cb,context){
 
 }
 
+//similar to calculateRealPos, for converting markup
+var vpos2pos=function(db, textvpos , text, vpos_end ) {
+	var tokenize=db.analyzer.tokenize;
+	var isSkip=db.analyzer.isSkip;
+	return _excerpt.calculateRealPos(tokenize,isSkip,textvpos,text,vpos_end);
+}
+
+
 var api={
 	search:_search
 	,highlightSeg:_highlightSeg
@@ -126,8 +124,9 @@ var api={
 	,highlightPage:_highlightPage
 	,highlightRange:_highlightRange
 	,searchInTag:_searchInTag
-	,excerpt:require("./excerpt")	
+	,excerpt:_excerpt
+	,vpos2pos:vpos2pos
 	,open:openEngine
-	,_search:dosearch
+	,_search:mainsearch//for testing only
 }
 module.exports=api;
