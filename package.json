@@ -1,6 +1,6 @@
 {
   "name": "ksana-search",
-  "version": "1.5.2",
+  "version": "1.5.3",
   "description": "ksana search engine",
   "main": "index.js",
   "scripts": {

@@ -57,7 +57,8 @@ var hitInRange=function(Q,startvpos,endvpos) {
 
 	return res;
 }
-
+var realHitInRange=function(Q,startvpos,endvpos,text){
+}
 var realHitInRange=function(Q,startvpos,endvpos,text){
 	var hits=hitInRange(Q,startvpos,endvpos);
 	return calculateRealPos(Q.tokenize,Q.isSkip,startvpos,text,hits);
@@ -159,6 +160,7 @@ var calculateRealPos=function(_tokenize,_isSkip,vpos,text,hits) {
 	var i=0,j=0,end=0, hit;
 	var hitstart=0,hitend=0,textnow=0;
 	//console.log("text",text,'len',text.length,"hits",hits)
+
 	while (i<tokens.length) {
 		//console.log("textnow",textnow,"token",tokens[i],"vpos",vpos)
 		if (vpos===end && out.length) {
@@ -169,7 +171,7 @@ var calculateRealPos=function(_tokenize,_isSkip,vpos,text,hits) {
 		var skip=_isSkip(tokens[i]);
 		if (!skip && j<hits.length && vpos===hits[j][0]) {
 			hit=[textnow, null];
-			hits[j][2]&& hit.push(hits[j][2]);
+			(typeof hits[j][2]!=="undefined") && hit.push(hits[j][2]);
 			out.push( hit);//len will be resolve later
 			end=vpos+hits[j][1];
 			j++;
@@ -182,7 +184,7 @@ var calculateRealPos=function(_tokenize,_isSkip,vpos,text,hits) {
 		var len=textnow-out[out.length-1][0];
 		out[out.length-1][1]=textnow-out[out.length-1][0];
 	}
-
+	
 	return out;
 }
 var resultlist=function(engine,Q,opts,cb) {
