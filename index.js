@@ -6,7 +6,9 @@
 var mainsearch=require("./search");
 var _excerpt=require("./excerpt")	;
 var prepareEngineForSearch=function(engine,cb){
-	engine.get([["tokens"],["postingslength"],{recursive:true}],function(){
+	var t=new Date();
+	engine.get([["tokens"],["postingslength"]],function(){
+		engine.timing.posting=new Date();
 		cb();
 	});
 }
