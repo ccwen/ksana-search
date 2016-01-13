@@ -153,7 +153,9 @@ var getFileWithHits=function(engine,Q,range) {
 }
 
 var calculateRealPos=function(_tokenize,_isSkip,vpos,text,hits) {
+
 	var out=[];
+	if (!text)return out;
 	var tokenized=_tokenize(text);
 	var tokens=tokenized.tokens;
 	var offsets=tokenized.offsets;
@@ -218,7 +220,7 @@ var resultlist=function(engine,Q,opts,cb) {
 		var nfile=fileWithHits[i];
 		var segoffsets=engine.getFileSegOffsets(nfile);
 		//console.log("file",nfile,"segoffsets",segoffsets)
-		var segnames=engine.getFileSegNames(nfile);
+		
 		files[nfile]={segoffsets:segoffsets};
 
 		var segwithhit=plist.groupbyposting2(Q.byFile[ nfile ],  segoffsets);
@@ -233,7 +235,7 @@ var resultlist=function(engine,Q,opts,cb) {
 			if (segoffset<opts.range.start) continue;
 			if (segoffset>opts.range.end) break;
 
-			output.push(  {file: nfile, seg:j,  segname:segnames[j]});
+			output.push(  {file: nfile, seg:j});
 			if (output.length>=opts.range.maxseg) break;
 		}
 		if (output.length>=opts.range.maxseg) break;
@@ -245,6 +247,7 @@ var resultlist=function(engine,Q,opts,cb) {
 	engine.get(segpaths,function(segs){
 		var seq=0;
 		if (segs) for (var i=0;i<segs.length;i++) {
+
 			var startvpos=files[output[i].file].segoffsets[output[i].seg];
 			var endvpos=files[output[i].file].segoffsets[output[i].seg+1]||engine.get("meta").vsize;
 			//console.log(startvpos,endvpos)
@@ -252,8 +255,11 @@ var resultlist=function(engine,Q,opts,cb) {
 
 			if (opts.nohighlight) {
 				hl.text=segs[i];
+
 				hl.hits=hitInRange(Q,startvpos,endvpos);
-				hl.realHits=calculateRealPos(Q,startvpos,hl.text,hl.hits);
+
+				hl.realHits=calculateRealPos(Q.tokenize,Q.isSkip,startvpos,hl.text,hl.hits);
+
 				//console.log("text",hl.text,"startvpos",startvpos,"endvpos",endvpos);
 				//console.log("hits",hl.hits,"realhits",hl.realHits);
 			} else {

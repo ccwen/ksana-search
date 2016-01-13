@@ -522,15 +522,16 @@ var phrase_intersect=function(engine,Q) {
 	}
 
 	Q.byFile=intersected;
-	Q.byFolder=groupByFolder(engine,Q.byFile);
+	//Q.byFolder=groupByFolder(engine,Q.byFile);
 	var out=[];
 	//calculate new rawposting
 	for (var i=0;i<Q.byFile.length;i++) {
 		if (Q.byFile[i].length) out=out.concat(Q.byFile[i]);
 	}
 	Q.rawresult=out;
-	countFolderFile(Q);
+	//countFolderFile(Q);
 }
+/*
 var countFolderFile=function(Q) {
 	Q.fileWithHitCount=0;
 	Q.byFile.map(function(f){if (f.length) Q.fileWithHitCount++});
@@ -538,7 +539,7 @@ var countFolderFile=function(Q) {
 	Q.folderWithHitCount=0;
 	Q.byFolder.map(function(f){if (f) Q.folderWithHitCount++});
 }
-
+*/
 var main=function(engine,q,opts,cb){
 
 	var starttime=new Date();
@@ -585,8 +586,8 @@ var main=function(engine,q,opts,cb){
 						//console.log("grouping",Q.rawresult.length,fileoffsets.length)
 						Q.byFile=plist.groupbyposting2(Q.rawresult, fileoffsets);
 						Q.byFile.shift();Q.byFile.pop();
-						Q.byFolder=groupByFolder(engine,Q.byFile);
-						countFolderFile(Q);
+						//Q.byFolder=groupByFolder(engine,Q.byFile);
+						//countFolderFile(Q);
 					}
 
 					engine.searchtime=new Date()-starttime;
