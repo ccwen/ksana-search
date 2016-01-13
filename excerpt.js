@@ -204,11 +204,11 @@ var resultlist=function(engine,Q,opts,cb) {
 		if (!opts.range.end) {
 			opts.range.end=Number.MAX_SAFE_INTEGER;
 		}
-
-		if (opts.range.from) {
-			opts.range.start=engine.txtid2vpos(engine.nextTxtid(opts.range.from))+1;
+		if (opts.range.from) { //convert to vpos
+			opts.range.start=engine.uti2vpos(opts.range.from)+1;//make sure loadSegments is called
 		}
 	}
+
 	var fileWithHits=getFileWithHits(engine,Q,opts.range);
 	if (!fileWithHits.length) {
 		cb(output);
@@ -255,13 +255,8 @@ var resultlist=function(engine,Q,opts,cb) {
 
 			if (opts.nohighlight) {
 				hl.text=segs[i];
-
 				hl.hits=hitInRange(Q,startvpos,endvpos);
-
 				hl.realHits=calculateRealPos(Q.tokenize,Q.isSkip,startvpos,hl.text,hl.hits);
-
-				//console.log("text",hl.text,"startvpos",startvpos,"endvpos",endvpos);
-				//console.log("hits",hl.hits,"realhits",hl.realHits);
 			} else {
 				var o={nocrlf:true,nospan:true,
 					text:segs[i],startvpos:startvpos, endvpos: endvpos, 

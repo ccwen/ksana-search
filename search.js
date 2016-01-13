@@ -549,6 +549,16 @@ var main=function(engine,q,opts,cb){
 	}
 	if (typeof opts=="function") cb=opts;
 	opts=opts||{};
+
+
+	var generateResult=function(Q){
+		excerpt.resultlist(engine,Q,opts,function(data) { 
+			//console.log("excerpt ok");
+			Q.excerpt=data;
+			engine.totaltime=new Date()-starttime;
+			cb.apply(engine.context,[0,Q]);
+		});		
+	}
 	
 	newQuery(engine,q,opts,function(Q){ 
 		if (!Q) {
@@ -591,12 +601,17 @@ var main=function(engine,q,opts,cb){
 					}
 
 					engine.searchtime=new Date()-starttime;
-					excerpt.resultlist(engine,Q,opts,function(data) { 
-						//console.log("excerpt ok");
-						Q.excerpt=data;
-						engine.totaltime=new Date()-starttime;
-						cb.apply(engine.context,[0,Q]);
-					});
+					if (opts.range.from && typeof opts.range.from==="string") {
+						var nfile_sid=engine.parseUti(opts.range.from);
+						var nfile=nfile_sid[0];
+						if (nfile>-1) {
+							engine.loadSegmentId([nfile],function(){
+								generateResult(Q);
+							});
+							return ;
+						}
+					}
+					generateResult(Q);
 				} else {
 					engine.searchtime=new Date()-starttime;
 					engine.totaltime=new Date()-starttime;
