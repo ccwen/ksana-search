@@ -237,7 +237,8 @@ var isSimplePhrase=function(phrase) {
 // 劫劫       ==> 劫    劫         1 1   // invalid
 // 因緣所生道  ==> 因緣  所生   道   2 2 1
 var splitPhrase=function(engine,simplephrase,bigram) {
-	var bigram=bigram||engine.get("meta").bigram||[];
+	var bigram=bigram||engine.get(["search","bigram"])||[];
+
 	var tokens=engine.analyzer.tokenize(simplephrase).tokens;
 	var loadtokens=[],lengths=[],j=0,lastbigrampos=-1;
 	while (j+1<tokens.length) {
@@ -245,7 +246,7 @@ var splitPhrase=function(engine,simplephrase,bigram) {
 		var nexttoken=engine.analyzer.normalize(tokens[j+1]);
 		var bi=token+nexttoken;
 		var i=plist.indexOfSorted(bigram,bi);
-		if (bigram[i]==bi) {
+		if (bigram[i]===bi) {
 			loadtokens.push(bi);
 			if (j+3<tokens.length) {
 				lastbigrampos=j;
@@ -270,7 +271,6 @@ var splitPhrase=function(engine,simplephrase,bigram) {
 		}
 		j++;
 	}
-
 	while (j<tokens.length) {
 		var token=engine.analyzer.normalize(tokens[j]);
 		loadtokens.push(token);
@@ -283,6 +283,11 @@ var splitPhrase=function(engine,simplephrase,bigram) {
 /* host has fast native function */
 var fastPhrase=function(engine,phrase,cb) {
 	var phrase_term=newPhrase();
+
+	if (!phrase.trim()) {
+		cb(phrase_term);
+		return;
+	}
 	//var tokens=engine.analyzer.tokenize(phrase).tokens;
 	var splitted=splitPhrase(engine,phrase);
 
@@ -459,7 +464,10 @@ var loadPostings=function(engine,tokens,cb) {
 		return;
 	}
 	var postingPaths=postingPathFromTokens(engine,tokens.map(function(t){return t.key}));
+	
+	var t=new Date();
 	engine.get(postingPaths,function(postings){
+		engine.timing.loadPostings=new Date()-t;
 		postings.map(function(p,i) { tokens[i].posting=p });
 		if (cb) cb();
 	});
@@ -543,27 +551,25 @@ var countFolderFile=function(Q) {
 var main=function(engine,q,opts,cb){
 
 	var starttime=new Date();
-	var meta=engine.get("meta");
-	if (meta.normalize && engine.analyzer.setNormalizeTable) {
-		meta.normalizeObj=engine.analyzer.setNormalizeTable(meta.normalize,meta.normalizeObj);
-	}
+
 	if (typeof opts=="function") cb=opts;
 	opts=opts||{};
 
 
 	var generateResult=function(Q){
+		var t=new Date();
 		excerpt.resultlist(engine,Q,opts,function(data) { 
 			//console.log("excerpt ok");
 			Q.excerpt=data;
-			engine.totaltime=new Date()-starttime;
+			engine.timing.excerpt=new Date()-t;
 			cb.apply(engine.context,[0,Q]);
 		});		
 	}
 	
 	newQuery(engine,q,opts,function(Q){ 
 		if (!Q) {
-			engine.searchtime=new Date()-starttime;
-			engine.totaltime=engine.searchtime;
+			engine.timing.search=new Date()-starttime;
+
 			if (engine.context) cb.apply(engine.context,["empty result",{rawresult:[]}]);
 			else cb("empty result",{rawresult:[]});
 			return;
@@ -573,13 +579,13 @@ var main=function(engine,q,opts,cb){
 			
 			loadPostings(engine,Q.terms,function(){
 				if (!Q.phrases[0].posting) {
-					engine.searchtime=new Date()-starttime;
-					engine.totaltime=engine.searchtime;
+					engine.timing.search=new Date()-starttime;
 					Q.rawresult=[];
 					cb.apply(engine.context,["no such posting",Q]);
 					return;			
 				}
 				
+				var startsearch=new Date();
 				if (!Q.phrases[0].posting.length) { //
 					Q.phrases.forEach(loadPhrase.bind(Q));
 				}
@@ -600,7 +606,7 @@ var main=function(engine,q,opts,cb){
 						//countFolderFile(Q);
 					}
 
-					engine.searchtime=new Date()-starttime;
+					engine.timing.search=new Date()-startsearch;
 					if (opts.range.from && typeof opts.range.from==="string") {
 						var nfile_sid=engine.parseUti(opts.range.from);
 						var nfile=nfile_sid[0];
@@ -613,14 +619,12 @@ var main=function(engine,q,opts,cb){
 					}
 					generateResult(Q);
 				} else {
-					engine.searchtime=new Date()-starttime;
-					engine.totaltime=new Date()-starttime;
+					engine.timing.search=new Date()-startsearch;
 					cb.apply(engine.context,[0,Q]);
 				}
 			});
 		} else { //empty search
-			engine.searchtime=new Date()-starttime;
-			engine.totaltime=new Date()-starttime;
+			engine.timing.search=new Date()-starttime;
 			cb.apply(engine.context,[0,Q]);
 		};
 	});

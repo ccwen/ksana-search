@@ -7,8 +7,14 @@ var mainsearch=require("./search");
 var _excerpt=require("./excerpt")	;
 var prepareEngineForSearch=function(engine,cb){
 	var t=new Date();
-	engine.get([["tokens"],["postingslength"]],function(){
-		engine.timing.posting=new Date();
+	engine.get([["tokens"],["postingslength"],["search"]],{recursive:true},function(){
+		if (!engine.timing.gettokens) engine.timing.gettokens=new Date()-t;
+			var meta=engine.get("meta");
+			var normalize=engine.get(["search","normalize"]);
+			if (normalize && engine.analyzer.setNormalizeTable) {
+				//normalized object will be combined in analyzer
+				meta.normalizeObj=engine.analyzer.setNormalizeTable(normalize,meta.normalizeObj);
+			}
 		cb();
 	});
 }
