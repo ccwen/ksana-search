@@ -283,6 +283,11 @@ var splitPhrase=function(engine,simplephrase,bigram) {
 /* host has fast native function */
 var fastPhrase=function(engine,phrase,cb) {
 	var phrase_term=newPhrase();
+
+ 	if (!phrase.trim()) {
+ 		cb(phrase_term);
+ 		return;
+ 	}
 	//var tokens=engine.analyzer.tokenize(phrase).tokens;
 	var splitted=splitPhrase(engine,phrase);
 
