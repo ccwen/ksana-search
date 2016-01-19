@@ -8,7 +8,7 @@ var _excerpt=require("./excerpt")	;
 var prepareEngineForSearch=function(engine,cb){
 	var t=new Date();
 	engine.get([["tokens"],["postingslength"]],function(){
-		if (engine.timing) engine.timing.posting=new Date();
+		if (engine.timing) engine.timing.posting=new Date()-t;
 		cb();
 	});
 }
