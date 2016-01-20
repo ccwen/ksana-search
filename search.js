@@ -447,8 +447,14 @@ var newQuery =function(engine,query,opts,cb) {
 }
 var postingPathFromTokens=function(engine,tokens) {
 	var alltokens=engine.get("tokens");
-
-	var tokenIds=tokens.map(function(t){ return 1+alltokens.indexOf(t)});
+	var meta=engine.get("meta");
+	
+	var tokenIds=tokens.map(function(t){ 
+		if (meta.indexer && meta.indexer>=16) {
+			return 1+plist.indexOfSorted(alltokens,tokens[0]);
+		}
+		return 1+alltokens.indexOf(t)
+	});
 	var postingid=[];
 	for (var i=0;i<tokenIds.length;i++) {
 		postingid.push( tokenIds[i]); // tokenId==0 , empty token
@@ -464,7 +470,6 @@ var loadPostings=function(engine,tokens,cb) {
 		return;
 	}
 	var postingPaths=postingPathFromTokens(engine,tokens.map(function(t){return t.key}));
-	
 	var t=new Date();
 	engine.get(postingPaths,function(postings){
 		engine.timing.loadPostings=new Date()-t;
