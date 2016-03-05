@@ -451,7 +451,7 @@ var postingPathFromTokens=function(engine,tokens) {
 	
 	var tokenIds=tokens.map(function(t){ 
 		if (meta.indexer && meta.indexer>=16) {
-			return 1+plist.indexOfSorted(alltokens,tokens[0]);
+			return 1+plist.indexOfSorted(alltokens,t);
 		}
 		return 1+alltokens.indexOf(t)
 	});
